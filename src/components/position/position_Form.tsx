@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, FormInstance } from 'antd';
-
+import { RULES_FORM } from '@/utils/validator';
 interface ReusableFormProps {
   formdulieu: FormInstance<any> | undefined;
   isEditing: Boolean;
@@ -17,7 +17,7 @@ export const PositionForm: React.FC<ReusableFormProps> = ({
     <Form.Item
       name="PositionName"
       label="Tên chức vụ"
-      rules={[{ required: true, message: 'Vui lòng nhập tên chức vụ!' }]}
+      rules={RULES_FORM.required}
     >
       <Input />
     </Form.Item>

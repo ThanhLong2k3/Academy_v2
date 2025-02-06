@@ -1,15 +1,18 @@
 import moment from 'moment';
 
 export const formatDate = (
-    inputDate: string | string[],
-    fromFormat: string = 'DD/MM/YYYY',
-    toFormat: string = 'YYYY-MM-DD',
-) => {
-    // Parse the input date using moment and specify the input format
-    const date = moment(inputDate, fromFormat);
+  inputDate: string | null | undefined,
+  fromFormat = 'DD/MM/YYYY',
+  toFormat = 'YYYY-MM-DD',
+): string | null => {
+  if (!inputDate) return null;
 
-    // Format the date in the desired format
-    const formattedDate = date.format(toFormat);
+  const date = moment(inputDate, fromFormat);
 
-    return formattedDate;
+  if (!date.isValid()) {
+    console.warn(`Invalid date: ${inputDate}`);
+    return null;
+  }
+
+  return date.format(toFormat);
 };

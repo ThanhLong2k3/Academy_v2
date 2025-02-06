@@ -4,12 +4,13 @@ export const Position_Colum: ColumnType[] = [
     title: 'Mã chức vụ',
     dataIndex: 'Id',
     key: 'Id',
-    width:'10%',
-    align:'center'
+    width: '10%',
+    align: 'center',
   },
   {
     title: 'Tên chức vụ',
     dataIndex: 'PositionName',
     key: 'PositionName',
+    width: '80%',
   },
 ];
