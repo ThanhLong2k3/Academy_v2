@@ -711,7 +711,7 @@ BEGIN
     
     START TRANSACTION;
         INSERT INTO Partner (PartnerName, PhoneNumber, Email, Address, StartDate, EndDate, PartnershipStatus,IsDeleted)
-        VALUES (p_PartnerName, p_PhoneNumber, p_Email, p_Address, p_StartDate, p_EndDate, p_PartnershipStatus,0);
+        VALUES (p_PartnerName, p_PhoneNumber, p_Email, p_Address, p_StartDate, IFNULL(p_EndDate, NULL), p_PartnershipStatus,0);
         
         -- SUCCESS
         SELECT 0 AS result;
