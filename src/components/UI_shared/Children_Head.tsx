@@ -17,13 +17,13 @@ import {
 } from '@ant-design/icons';
 interface HeaderProps {
   title: string;
-  closeModal: () => void;
+  onAdd: () => void;
   text_btn_add: string;
 }
 
 const Header_Children: React.FC<HeaderProps> = ({
   title,
-  closeModal,
+  onAdd,
   text_btn_add,
 }) => {
   return (
@@ -90,7 +90,7 @@ const Header_Children: React.FC<HeaderProps> = ({
           icon={<PlusOutlined />}
           className="bg-purple-600"
           onClick={() => {
-            closeModal();
+            onAdd();
           }}
         >
           {text_btn_add}

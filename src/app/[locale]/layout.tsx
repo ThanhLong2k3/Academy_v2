@@ -1,7 +1,6 @@
 'use client';
 import '@/assets/scss/_global.scss';
 import AppProvider from './AppProvider';
-import Header from '@/modules/shared/header/Header';
 import { Layout, ConfigProvider } from 'antd';
 import SiderBar from '@/modules/shared/siderbar/siderbar';
 import { App as AntApp } from 'antd';
@@ -15,14 +14,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body>
-        <ConfigProvider
-          theme={{
-            token: {
-              colorPrimary: '#6366f1',
-              borderRadius: 8,
-            },
-          }}
-        >
+        <ConfigProvider>
           <AntApp>
             <AppProvider>
               <Layout className="min-h-screen">
@@ -37,7 +29,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   <SiderBar />
                 </Sider>
                 <Layout className="ml-[280px]">
-                  <Content className="p-6 min-h-[calc(100vh-64px)] bg-gray-50">
+                  <Content className="p-6 min-h-[calc(100vh-64px)]">
                     {children}
                   </Content>
                 </Layout>

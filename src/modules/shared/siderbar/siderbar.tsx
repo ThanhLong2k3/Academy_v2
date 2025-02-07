@@ -1,5 +1,6 @@
 'use client';
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { ConfigProvider } from 'antd';
 import Image from 'next/image';
 import {
   UserOutlined,
@@ -13,10 +14,9 @@ import {
   BankOutlined,
   FolderOutlined,
 } from '@ant-design/icons';
-import type { MenuProps, MenuTheme } from 'antd';
+import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -27,7 +27,7 @@ const routeMap: { [key: string]: string } = {
   '6': '/Projects',
   '7': '/Topics',
   '8': '/Training',
-  '2': '/Partners',
+  '2': '/vi/partner',
   '3': '/Customers',
   '5': '/Products',
   '9': '/Intellectual-Property',
@@ -45,16 +45,14 @@ const SideBar = () => {
     return entry ? entry[0] : '1';
   }, [pathname]);
 
-  const [current, setCurrent] = useState(getCurrentKey());
-
   const onClick: MenuProps['onClick'] = useCallback(
     (e: any) => {
-      setCurrent(e.key);
-      if (routeMap[e.key]) {
-        router.push(routeMap[e.key]);
+      const path = routeMap[e.key];
+      if (path && path !== pathname) {
+        router.push(path);
       }
     },
-    [router],
+    [router, pathname],
   );
 
   const sidebarItems = useMemo(
@@ -141,35 +139,45 @@ const SideBar = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Logo Container */}
       <div
         className="flex items-center justify-center h-16 px-4"
         style={{
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #f0f0f0',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <Image
           src="/image/logo.png"
           alt="Logo"
-          width={250}
-          height={100}
+          width={150}
+          height={60}
           className="h-12 object-contain"
           style={{ marginLeft: '10px' }}
         />
       </div>
 
-      {/* Menu */}
       <div className="flex-1 overflow-y-auto">
-        <Menu
-          theme="light"
-          onClick={onClick}
-          className="h-full border-0"
-          defaultOpenKeys={['sub1', 'sub2', 'sub4']}
-          selectedKeys={[current]}
-          mode="inline"
-          items={sidebarItems}
-        />
+        <ConfigProvider
+          theme={{
+            components: {
+              Menu: {
+                itemHeight: 30,
+              },
+            },
+          }}
+        >
+          <Menu
+            onClick={onClick}
+            className="h-full border-0"
+            defaultOpenKeys={['sub1', 'sub2', 'sub4']}
+            selectedKeys={[getCurrentKey()]}
+            mode="inline"
+            items={sidebarItems}
+          />
+        </ConfigProvider>
       </div>
     </div>
   );
