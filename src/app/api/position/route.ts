@@ -1,73 +1,29 @@
-import { GetPosition, AddPoistion } from './../../../models/position.model';
-import { type NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/libs/db';
+import type { NextRequest } from 'next/server';
+import { db_Provider } from '@/app/api/Api_Provider';
+import type { GetPosition, AddPosistion } from '@/models/position.model';
 
 export async function GET() {
-  try {
-    const positions = await executeQuery<GetPosition[]>('CALL GetPositions()');
-    return NextResponse.json(positions[0]);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
+  return db_Provider<GetPosition[]>('CALL GetPositions()');
 }
-
-
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: AddPoistion = await request.json();
-
-    await executeQuery('CALL AddPosition(?, @p_Result)', [body.PositionName]);
-
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-    return NextResponse.json({ result: result[0].Result }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
+  const body: AddPosistion = await request.json();
+  return db_Provider<any>('CALL AddPosition(?)', [body.PositionName], true);
 }
 
-export async function PATCH(
-  request: NextRequest,
-) {
-  try {
-    const body: GetPosition = await request.json();
-
-    await executeQuery('CALL UpdatePosition(?,?,@p_Result)', [
-      body.Id,
-      body.PositionName,
-    ]);
-     
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-  return NextResponse.json({ result: result[0].Result }, { status: 200 });
-} catch (error) {
-  return NextResponse.json(
-    { result: 1, error: 'Internal Server Error' },
-    { status: 500 },
+export async function PATCH(request: NextRequest) {
+  const body: GetPosition = await request.json();
+  return db_Provider<any>(
+    'CALL UpdatePosition(?,?)',
+    [body.Id, body.PositionName],
+    true,
   );
 }
-}
 
-export async function DELETE(
-  request: NextRequest
-) {
-  try {
-    const id = request.nextUrl.searchParams.get("id");
-    await executeQuery('CALL DeletePosition(?, @p_Result)', [id]);
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-    return NextResponse.json({ result: result[0].Result }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
-      { status: 500 },
-    );
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id');
+  if (!id) {
+    return new Response('Missing ID', { status: 400 });
   }
+  return db_Provider<any>('CALL DeletePosition(?)', [id], true);
 }

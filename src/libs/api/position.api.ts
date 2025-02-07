@@ -1,39 +1,24 @@
-import { GetPosition, AddPoistion } from '../../models/position.model';
-
-const API_URL = '/api';
+import { GetPosition, AddPosistion } from '../../models/position.model';
+import { CallApi } from '@/libs/call_API';
 
 export const PositionAPI = {
-  getAll: async (): Promise<GetPosition[]> => {
-    const res = await fetch(`${API_URL}/position`);
-    return res.json();
+  getAllPosition: async () => {
+    const data: GetPosition[] = await CallApi.getAll<GetPosition>('position');
+    return data;
   },
 
-  create: async (data: AddPoistion): Promise<number> => {
-    const res = await fetch(`${API_URL}/position`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+  createPosition: async (newPosition: AddPosistion) => {
+    const data = await CallApi.create<number>('position', newPosition);
+    return data;
   },
 
-  update: async ( data: GetPosition): Promise<number> => {
-    const res = await fetch(`${API_URL}/position`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+  updatePosition: async (position: GetPosition) => {
+    const data = await CallApi.update<number>('position', position);
+    return data;
   },
 
-  delete: async (id: number): Promise<void> => {
-    const res = await fetch(`${API_URL}/position?id=${id}`, {
-      method: 'DELETE',
-    });
-    return res.json();
+  deletePosition: async (Id: number): Promise<number> => {
+    const data = await CallApi.delete<number>('position', Id);
+    return data;
   },
 };
