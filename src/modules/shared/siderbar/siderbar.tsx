@@ -18,12 +18,12 @@ import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import { useColorState } from '@/stores/color.store';
-import styles from '@/modules/shared/siderbar/siderbar';
+import styles from './siderbar.module.scss';
 type MenuItem = Required<MenuProps>['items'][number];
 
 const routeMap: { [key: string]: string } = {
   '12': '/vi/position',
-  '10': '/Employee',
+  '10': '/vi/division',
   '1': '/Staff',
   '6': '/Projects',
   '7': '/Topics',
@@ -119,19 +119,19 @@ const SideBar = () => {
         icon: <SettingOutlined />,
         children: [
           {
-            key: '12',
-            label: 'Quản lý chức vụ',
-            icon: <BankOutlined />,
+            key: '11',
+            label: 'Đơn vị/ công ty con',
+            icon: <TeamOutlined />,
           },
           {
             key: '10',
-            label: 'Quản lý đơn vị',
+            label: 'Quản bộ phận',
             icon: <FolderOutlined />,
           },
           {
-            key: '11',
-            label: 'Quản lý phòng ban',
-            icon: <TeamOutlined />,
+            key: '12',
+            label: 'Quản lý chức vụ',
+            icon: <BankOutlined />,
           },
         ],
       },
@@ -171,7 +171,7 @@ const SideBar = () => {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.menuContainer}>
         <ConfigProvider
           theme={{
             token: {
@@ -183,7 +183,7 @@ const SideBar = () => {
                 itemHeight: 30,
                 itemColor: textColor,
                 itemHoverColor: textColor,
-                colorItemTextSelectedHorizontal: textColor,
+                horizontalItemSelectedColor: textColor,
               },
             },
           }}

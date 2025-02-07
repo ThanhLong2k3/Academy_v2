@@ -131,3 +131,72 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+-- Division
+
+DELIMITER $$
+
+CREATE PROCEDURE AddDivision(
+    IN d_DivisionName NVARCHAR(50),
+    IN d_DepartmentId INT,
+    IN d_Description NVARCHAR(250)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO Division (DivisionName,DepartmentId,Description) 
+    VALUES (d_DivisionName,d_DepartmentId,d_Description);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+CREATE PROCEDURE UpdateDivision(
+    IN p_Id INT,
+    IN d_DivisionName NVARCHAR(50),
+    IN d_DepartmentId INT,
+    IN d_Description NVARCHAR(250)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Division
+    SET DivisionName = d_DivisionName,
+    DepartmentId=d_DepartmentId,
+    Description=d_Description
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+CREATE PROCEDURE DeleteDivision(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Division
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+CREATE PROCEDURE GetDivision()
+BEGIN
+    SELECT d.Id,d.DivisionName,dp.DepartmentName,d.DepartmentId,d.Description
+    FROM Division d INNER JOIN Department dp ON d.DepartmentId=dp.Id
+    WHERE d.IsDeleted = 0;
+END$$
+
+DELIMITER ;
+
