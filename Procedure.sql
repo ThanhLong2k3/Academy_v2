@@ -62,3 +62,72 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+
+-- Department
+
+DELIMITER $$
+
+
+CREATE PROCEDURE AddDepartment(
+    IN p_DepartmentName NVARCHAR(50),
+    IN p_Descripttion NVARCHAR(250)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO Department (DepartmentName,Description ) 
+    VALUES (p_DepartmentName,p_Descripttion);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+
+CREATE PROCEDURE UpdateDepartment(
+    IN p_Id INT,
+	IN p_DepartmentName NVARCHAR(50),
+    IN p_Description NVARCHAR(250)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Department
+    SET DepartmentName = p_DepartmentName,Description=p_Description
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+
+CREATE PROCEDURE DeleteDepartment(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Department
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+
+CREATE PROCEDURE GetDepartment()
+BEGIN
+    SELECT Id, DepartmentName,Description
+    FROM Department
+    WHERE IsDeleted = 0;
+END$$
+
+DELIMITER ;
