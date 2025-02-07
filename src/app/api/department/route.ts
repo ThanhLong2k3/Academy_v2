@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const body: GetDepartment = await request.json();
+  console.log(body);
   return db_Provider<any>(
     'CALL UpdateDepartment(?,?,?)',
     [body.Id, body.DepartmentName, body.Description],

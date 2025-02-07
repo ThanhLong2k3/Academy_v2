@@ -3,38 +3,39 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { GetDepartment } from '@/models/department.model';
-import { DepartmentAPI } from '@/libs/api/department.api';
+import { GetDivision } from '@/models/division.model';
+import { divisionAPI } from '@/libs/api/division.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
-import { DepartmentForm } from '@/components/Department/department_Form';
-import { Department_Colum } from '@/components/Department/department_Table';
+import { DivisiontForm } from '@/components/division/division_Form';
+import { Division_Colum } from '@/components/division/division_Table';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 
-const DepartmentPage = () => {
-  const [Departments, setDepartments] = useState<GetDepartment[]>([]);
+const DivisionPage = () => {
+  const [Divisions, setDivisions] = useState<GetDivision[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingDepartment, setEditingDepartment] =
-    useState<GetDepartment | null>(null);
+  const [editingDivision, setEditingDivision] = useState<GetDivision | null>(
+    null,
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
   const { show } = useNotification();
 
   useEffect(() => {
-    GetAllDepartment();
+    GetAllDivision();
   }, []);
 
-  const GetAllDepartment = async () => {
+  const GetAllDivision = async () => {
     try {
       setLoading(true);
-      const data = await DepartmentAPI.getAllDepartment();
-      setDepartments(data);
+      const data = await divisionAPI.getAlldivision();
+      setDivisions(data);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách đơn vị',
+        messageError: 'Lỗi tải danh sách bộ phận',
       });
     } finally {
       setLoading(false);
@@ -43,27 +44,27 @@ const DepartmentPage = () => {
 
   const handleRefresh = () => {
     setSearchText('');
-    GetAllDepartment();
+    GetAllDivision();
   };
 
   const handleSearch = (value: string) => {
     setSearchText(value);
-    const filteredData = Departments.filter((Department) =>
-      Department.DepartmentName?.toLowerCase().includes(value.toLowerCase()),
+    const filteredData = Divisions.filter((Division) =>
+      Division.DivisionName?.toLowerCase().includes(value.toLowerCase()),
     );
-    setDepartments(filteredData);
+    setDivisions(filteredData);
   };
 
   // Modal Functions
   const openCreateModal = () => {
-    setEditingDepartment(null);
+    setEditingDivision(null);
     setIsEditing(false);
     form.resetFields();
     setModalVisible(true);
   };
 
-  const openEditModal = (record: GetDepartment) => {
-    setEditingDepartment(record);
+  const openEditModal = (record: GetDivision) => {
+    setEditingDivision(record);
     setIsEditing(true);
     form.setFieldsValue(record);
     setModalVisible(true);
@@ -71,24 +72,24 @@ const DepartmentPage = () => {
 
   const closeModal = () => {
     setModalVisible(false);
-    setEditingDepartment(null);
+    setEditingDivision(null);
     setIsEditing(false);
     form.resetFields();
   };
 
-  const handleDelete = async (record: GetDepartment) => {
+  const handleDelete = async (record: GetDivision) => {
     try {
-      const data: any = await DepartmentAPI.deleteDepartment(record.Id);
+      const data: any = await divisionAPI.deletedivision(record.Id);
       show({
         result: data.result,
-        messageDone: 'Xóa đơn vị thành công',
-        messageError: 'Xóa đơn vị thất bại',
+        messageDone: 'Xóa bộ phận thành công',
+        messageError: 'Xóa bộ phận thất bại',
       });
-      GetAllDepartment();
+      GetAllDivision();
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi xóa đơn vị',
+        messageError: 'Lỗi xóa bộ phận',
       });
     }
   };
@@ -99,33 +100,34 @@ const DepartmentPage = () => {
       setLoading(true);
       let result: any;
 
-      if (editingDepartment) {
+      if (editingDivision) {
         const value = {
-          Id: editingDepartment.Id,
-          DepartmentName: values.DepartmentName,
+          Id: editingDivision.Id,
+          DivisionName: values.DivisionName,
+          DepartmentId: values.DepartmentId,
           Description: values.Description,
         };
-        result = await DepartmentAPI.updateDepartment(value);
+        result = await divisionAPI.updatedivision(value);
         show({
           result: result.result,
-          messageDone: 'Cập nhật đơn vị thành công',
-          messageError: 'Cập nhật đơn vị thất bại',
+          messageDone: 'Cập nhật bộ phận thành công',
+          messageError: 'Cập nhật bộ phận thất bại',
         });
       } else {
-        result = await DepartmentAPI.createDepartment(values);
+        result = await divisionAPI.createdivision(values);
         show({
           result: result.result,
-          messageDone: 'Thêm đơn vị thành công',
-          messageError: 'Thêm đơn vị thất bại',
+          messageDone: 'Thêm bộ phận thành công',
+          messageError: 'Thêm bộ phận thất bại',
         });
       }
 
-      await GetAllDepartment();
+      await GetAllDivision();
       closeModal();
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi lưu đơn vị',
+        messageError: 'Lỗi lưu bộ phận',
       });
     } finally {
       setLoading(false);
@@ -133,7 +135,7 @@ const DepartmentPage = () => {
   };
 
   const columns = COLUMNS({
-    columnType: Department_Colum,
+    columnType: Division_Colum,
     openModal: openEditModal,
     handleDelete: handleDelete,
   });
@@ -142,9 +144,9 @@ const DepartmentPage = () => {
     <Card className="p-6">
       {/* Tier 1: Title and Add Button */}
       <Header_Children
-        title={'Quản lý đơn vị'}
+        title={'Quản lý bộ phận'}
         onAdd={openCreateModal}
-        text_btn_add="Thêm đơn vị"
+        text_btn_add="Thêm bộ phận"
       />
 
       <hr />
@@ -153,7 +155,7 @@ const DepartmentPage = () => {
       <div className="py-4">
         <Space size="middle">
           <Input.Search
-            placeholder="Search Departments..."
+            placeholder="Search Divisions..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
@@ -176,12 +178,12 @@ const DepartmentPage = () => {
       <div className="py-4">
         <Table
           columns={columns}
-          dataSource={Departments}
+          dataSource={Divisions}
           rowKey="Id"
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
-            total: Departments.length,
+            total: Divisions.length,
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
@@ -192,16 +194,16 @@ const DepartmentPage = () => {
 
       {/* Modal Form */}
       <Modal
-        title={editingDepartment ? 'Cập nhập đơn vị' : 'Thêm đơn vị'}
+        title={editingDivision ? 'Cập nhập bộ phận' : 'Thêm bộ phận'}
         open={modalVisible}
         onOk={handleSave}
         onCancel={closeModal}
         width="60%"
       >
-        <DepartmentForm formdulieu={form} isEditing={isEditing} />
+        <DivisiontForm formdulieu={form} />
       </Modal>
     </Card>
   );
 };
 
-export default DepartmentPage;
+export default DivisionPage;
