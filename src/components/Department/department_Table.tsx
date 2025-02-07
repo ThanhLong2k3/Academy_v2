@@ -1,6 +1,6 @@
 import { ColumnType } from '../UI_shared/ColumType';
 
-export const Position_Colum: ColumnType[] = [
+export const Department_Colum: ColumnType[] = [
   {
     title: 'Số thứ tự',
     key: 'stt',
@@ -11,9 +11,9 @@ export const Position_Colum: ColumnType[] = [
     ),
   },
   {
-    title: 'Tên chức vụ',
-    dataIndex: 'PositionName',
-    key: 'PositionName',
+    title: 'Tên đơn vị',
+    dataIndex: 'DepartmentName',
+    key: 'DepartmentName',
     width: '80%',
   },
 ];

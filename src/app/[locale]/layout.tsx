@@ -1,37 +1,42 @@
 'use client';
 import '@/assets/scss/_global.scss';
 import AppProvider from './AppProvider';
-import Header from '@/modules/shared/header/Header';
-import { Layout } from 'antd';
+import { Layout, ConfigProvider } from 'antd';
 import SiderBar from '@/modules/shared/siderbar/siderbar';
-import Footer from '@/modules/shared/footer/Footer';
-import { App } from 'antd';
+import { App as AntApp } from 'antd';
 const { Sider, Content } = Layout;
+
 interface RootLayoutProps {
   children: React.ReactNode;
 }
-
-const siderStyle: React.CSSProperties = {
-  lineHeight: '120px',
-};
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body>
-        <AppProvider>
-          <Layout style={{ minHeight: '100vh' }}>
-            <Sider width="18% " style={siderStyle}>
-              <SiderBar />
-            </Sider>
-            <Layout>
-              <Header />
-              <Content>
-                <App> {children}</App>
-              </Content>
-            </Layout>
-          </Layout>
-        </AppProvider>
+        <ConfigProvider>
+          <AntApp>
+            <AppProvider>
+              <Layout className="min-h-screen">
+                <Sider
+                  width="18%"
+                  className="fixed left-0 top-0 h-screen overflow-y-auto"
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderRight: '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <SiderBar />
+                </Sider>
+                <Layout className="ml-[280px]">
+                  <Content className="p-6 min-h-[calc(100vh-64px)]">
+                    {children}
+                  </Content>
+                </Layout>
+              </Layout>
+            </AppProvider>
+          </AntApp>
+        </ConfigProvider>
       </body>
     </html>
   );

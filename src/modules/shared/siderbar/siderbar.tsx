@@ -1,5 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { ConfigProvider } from 'antd';
+import Image from 'next/image';
 import {
   UserOutlined,
   ProjectOutlined,
@@ -12,197 +14,196 @@ import {
   BankOutlined,
   FolderOutlined,
 } from '@ant-design/icons';
-import type { MenuProps, MenuTheme } from 'antd';
-import { Menu, Switch, Tooltip } from 'antd';
-import { useRouter } from 'next/navigation';
-
+import type { MenuProps } from 'antd';
+import { Menu } from 'antd';
+import { useRouter, usePathname } from 'next/navigation';
+import { useColorState } from '@/stores/color.store';
+import styles from './siderbar.module.scss';
 type MenuItem = Required<MenuProps>['items'][number];
 
-const getSidebarItems = (): MenuItem[] => [
-  {
-    key: 'sub1',
-    label: 'Quản lý con người',
-    icon: <UserOutlined />,
-    children: [
-      {
-        key: '1',
-        label: 'Quản lý nhân viên',
-        icon: <TeamOutlined />,
-      },
-      {
-        key: '2',
-        label: 'Quản lý đối tác',
-        icon: <UsergroupAddOutlined />,
-      },
-      {
-        key: '3',
-        label: 'Quản lý khách hàng',
-        icon: <WalletOutlined />,
-      },
-    ],
-  },
-  {
-    key: 'sub2',
-    label: 'Quản lý phi vật thể',
-    icon: <ProjectOutlined />,
-    children: [
-      {
-        key: '5',
-        label: 'Quản lý sản phẩm',
-        icon: <FolderOutlined />,
-      },
-      {
-        key: '6',
-        label: 'Quản lý dự án',
-        icon: <TrophyOutlined />,
-      },
-      {
-        key: '7',
-        label: 'Quản lý đề tài',
-        icon: <BookOutlined />,
-      },
-      {
-        key: '8',
-        label: 'Quản lý khóa đào tạo',
-        icon: <BankOutlined />,
-      },
-      {
-        key: '9',
-        label: 'Sở hữu trí tuệ',
-        icon: <SettingOutlined />,
-      },
-    ],
-  },
-  {
-    key: 'sub4',
-    label: 'Danh Mục',
-    icon: <SettingOutlined />,
-    children: [
-      {
-        key: '12',
-        label: 'Quản lý chức vụ',
-        icon: <BankOutlined />,
-      },
-      {
-        key: '10',
-        label: 'Quản lý đơn vị',
-        icon: <FolderOutlined />,
-      },
-      {
-        key: '11',
-        label: 'Quản lý phòng ban',
-        icon: <TeamOutlined />,
-      },
-    ],
-  },
-];
+const routeMap: { [key: string]: string } = {
+  '12': '/vi/position',
+  '10': '/vi/division',
+  '1': '/Staff',
+  '6': '/Projects',
+  '7': '/Topics',
+  '8': '/Training',
+  '2': '/vi/partner',
+  '3': '/Customers',
+  '5': '/Products',
+  '9': '/Intellectual-Property',
+  '11': '/vi/department',
+};
 
-const SiderBar = () => {
-  const [theme, setTheme] = useState<MenuTheme>('dark');
-  const [current, setCurrent] = useState('1');
+const SideBar = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const { themeColor } = useColorState();
 
-  const changeTheme = (value: boolean) => {
-    setTheme(value ? 'dark' : 'light');
-  };
+  const getCurrentKey = useCallback(() => {
+    const entry = Object.entries(routeMap).find(
+      ([_, path]) => path === pathname,
+    );
+    return entry ? entry[0] : '1';
+  }, [pathname]);
 
-  const onClick: MenuProps['onClick'] = (e) => {
-    console.log('Click menu: ', e.key);
-    setCurrent(e.key);
-debugger
-    const routeMap: { [key: string]: string } = {
-      '12': 'vi/position',
-      '10': '/Employee',
-      '1': '/Staff',
-      '6': '/Projects',
-      '7': '/Topics',
-      '8': '/Training',
-    };
+  const onClick: MenuProps['onClick'] = useCallback(
+    (e: any) => {
+      const path = routeMap[e.key];
+      if (path && path !== pathname) {
+        router.push(path);
+      }
+    },
+    [router, pathname],
+  );
 
-    if (routeMap[e.key]) {
-      router.push(routeMap[e.key]);
-    }
-  };
+  const sidebarItems = useMemo(
+    () => [
+      {
+        key: 'sub1',
+        label: 'Quản lý con người',
+        icon: <UserOutlined />,
+        children: [
+          {
+            key: '1',
+            label: 'Quản lý nhân viên',
+            icon: <TeamOutlined />,
+          },
+          {
+            key: '2',
+            label: 'Quản lý đối tác',
+            icon: <UsergroupAddOutlined />,
+          },
+          {
+            key: '3',
+            label: 'Quản lý khách hàng',
+            icon: <WalletOutlined />,
+          },
+        ],
+      },
+      {
+        key: 'sub2',
+        label: 'Quản lý phi vật thể',
+        icon: <ProjectOutlined />,
+        children: [
+          {
+            key: '5',
+            label: 'Quản lý sản phẩm',
+            icon: <FolderOutlined />,
+          },
+          {
+            key: '6',
+            label: 'Quản lý dự án',
+            icon: <TrophyOutlined />,
+          },
+          {
+            key: '7',
+            label: 'Quản lý đề tài',
+            icon: <BookOutlined />,
+          },
+          {
+            key: '8',
+            label: 'Quản lý khóa đào tạo',
+            icon: <BankOutlined />,
+          },
+          {
+            key: '9',
+            label: 'Sở hữu trí tuệ',
+            icon: <SettingOutlined />,
+          },
+        ],
+      },
+      {
+        key: 'sub4',
+        label: 'Danh Mục',
+        icon: <SettingOutlined />,
+        children: [
+          {
+            key: '11',
+            label: 'Đơn vị/ công ty con',
+            icon: <TeamOutlined />,
+          },
+          {
+            key: '10',
+            label: 'Quản bộ phận',
+            icon: <FolderOutlined />,
+          },
+          {
+            key: '12',
+            label: 'Quản lý chức vụ',
+            icon: <BankOutlined />,
+          },
+        ],
+      },
+    ],
+    [],
+  );
+
+  const textColor = themeColor?.token?.colorPrimary ? '#ffffff' : '#000000';
 
   return (
     <div
-      className="h-screen flex flex-col"
+      className="h-full flex flex-col"
       style={{
-        width: '270px',
-        boxShadow: '2px 0 8px rgba(0,0,0,0.15)',
-        backgroundColor: theme === 'dark' ? '#1F2937' : '#ffffff',
-        transition: 'all 0.3s ease',
+        backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+        color: textColor,
+        height: '100vh',
       }}
     >
-      {/* Logo Container */}
       <div
-        className="flex items-center justify-center"
+        className="flex items-center justify-center h-16 px-4"
         style={{
-          height: '80px',
-          backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
-          borderBottom: '1px solid ' + (theme === 'dark' ? '#374151' : '#E5E7EB'),
-          padding: '0 20px',
+          backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+          color: textColor,
+          borderBottom: '1px solid #f0f0f0',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
-        <img 
-          src="/image/logo.png" 
-          alt="Logo" 
-          style={{
-            height: '60px',
-            objectFit: 'contain'
-          }}
+        <Image
+          src="/image/logo.png"
+          alt="Logo"
+          width={150}
+          height={60}
+          className="h-12 object-contain"
+          style={{ marginLeft: '10px' }}
         />
       </div>
 
-      {/* Menu */}
-      <Menu
-        theme={theme}
-        onClick={onClick}
-        style={{
-          flex: 1,
-          padding: '12px 0',
-          backgroundColor: 'transparent',
-          border: 'none',
-        }}
-        defaultOpenKeys={['sub1', 'sub2', 'sub4']}
-        selectedKeys={[current]}
-        mode="inline"
-        items={getSidebarItems()}
-        inlineIndent={16}
-      />
-
-      {/* Theme Switch */}
-      <div 
-        className="flex justify-between items-center px-6 py-4"
-        style={{
-          borderTop: '1px solid ' + (theme === 'dark' ? '#374151' : '#E5E7EB'),
-          backgroundColor: theme === 'dark' ? '#111827' : '#f8f9fa',
-        }}
-      >
-        <span
-          className="text-sm font-medium"
-          style={{ 
-            color: theme === 'dark' ? '#E5E7EB' : '#4B5563'
+      <div className={styles.menuContainer}>
+        <ConfigProvider
+          theme={{
+            token: {
+              colorBgContainer: themeColor?.token?.colorPrimary || '#ffffff',
+              colorText: textColor,
+            },
+            components: {
+              Menu: {
+                itemHeight: 30,
+                itemColor: textColor,
+                itemHoverColor: textColor,
+                horizontalItemSelectedColor: textColor,
+              },
+            },
           }}
         >
-          Giao Diện
-        </span>
-        <Tooltip
-          title={theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
-        >
-          <Switch
-            checked={theme === 'dark'}
-            onChange={changeTheme}
-            checkedChildren="Tối"
-            unCheckedChildren="Sáng"
+          <Menu
+            onClick={onClick}
+            className="h-full border-0"
+            defaultOpenKeys={['sub1', 'sub2', 'sub4']}
+            selectedKeys={[getCurrentKey()]}
+            mode="inline"
+            items={sidebarItems}
             style={{
-              backgroundColor: theme === 'dark' ? '#4B5563' : '#E5E7EB'
+              backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+              color: textColor,
             }}
           />
-        </Tooltip>
+        </ConfigProvider>
       </div>
     </div>
   );
 };
 
-export default SiderBar;
+export default SideBar;

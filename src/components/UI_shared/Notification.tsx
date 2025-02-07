@@ -1,19 +1,17 @@
-import React from 'react';
-import { notification } from 'antd';
-import { ArgsProps } from 'antd/es/notification';
+// src/hooks/useNotification.ts
 import { App } from 'antd';
-interface CustomNotificationProps {
+import type { NotificationArgsProps } from 'antd';
+
+interface NotificationProps {
   result: any;
-  MessageDone?: string;
-  MessageError?: string;
+  messageDone?: string;
+  messageError?: string;
 }
 
-export const CustomNotification: React.FC<CustomNotificationProps> = ({
-  result,
-  MessageDone = 'Thao tác thành công',
-  MessageError = 'Thao tác thất bại',
-}) => {
-  const notificationConfig: ArgsProps = {
+export const useNotification = () => {
+  const { notification } = App.useApp();
+
+  const notificationConfig: NotificationArgsProps = {
     message: 'Thông báo',
     duration: 3,
     style: {
@@ -22,23 +20,27 @@ export const CustomNotification: React.FC<CustomNotificationProps> = ({
     },
     placement: 'topRight',
   };
-  debugger;
-  if (result === 0) {
-    notification.error({
-      ...notificationConfig,
-      message: 'Thông báo',
-      description: MessageDone,
-    });
-    return null;
-  }
-  if (result === 1) {
-    notification.success({
-      ...notificationConfig,
-      message: 'Thông báo',
-      description: MessageError,
-    });
-    return null;
-  }
-};
 
-export default CustomNotification;
+  const show = ({
+    result,
+    messageDone = 'Thao tác thành công',
+    messageError = 'Thao tác thất bại',
+  }: NotificationProps) => {
+    debugger;
+    if (result === 0) {
+      notification.success({
+        ...notificationConfig,
+        description: messageDone,
+      });
+    }
+
+    if (result === 1) {
+      notification.error({
+        ...notificationConfig,
+        description: messageError,
+      });
+    }
+  };
+
+  return { show };
+};

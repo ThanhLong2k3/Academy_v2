@@ -1,79 +1,75 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/libs/db';
-import { Partner_DTO,AddPartner_DTO } from '@/models/partners.model';
+import { db_Provider } from '@/app/api/Api_Provider';
+import type { Partner_DTO, AddPartner_DTO } from '@/models/partners.model';
+import { formatDate } from '@/utils/date';
 
 export async function GET() {
-  try {
-    const data = await executeQuery<Partner_DTO[]>('CALL GetPartners()');
-    return NextResponse.json(data[0]);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
+  return db_Provider<Partner_DTO[]>('CALL GetPartners()');
 }
 
-
-
 export async function POST(request: NextRequest) {
-    try {
-      const body: AddPartner_DTO = await request.json()
-  
-      const result:any = await executeQuery("CALL AddPartner(?,?,?,?,?,?,?)", [
+  try {
+    const body: AddPartner_DTO = await request.json();
+    console.log(body);
+    const formattedStartDate = formatDate(
+      body.StartDate,
+      'YYYY/MM/DD',
+      'YYYY-MM-DD',
+    );
+    const formattedEndDate = formatDate(
+      body.EndDate,
+      'YYYY/MM/DD',
+      'YYYY-MM-DD',
+    );
+    const result = await db_Provider<any>(
+      'CALL AddPartner(?,?,?,?,?,?,?)',
+      [
         body.PartnerName,
         body.PhoneNumber,
         body.Email,
         body.Address,
-        body.StartDate,
-        body.EndDate,
+        formattedStartDate,
+        formattedEndDate,
         body.PartnershipStatus,
-      ])
-  
-      if (result[0][0].result === 0) {
-        return NextResponse.json({ result: 0 }, { status: 200 })
-      } else {
-        throw new Error("Failed to add partner")
+      ],
+      true,
+    );
+
+    if (result.status === 200 && result.json) {
+      const jsonResult = await result.json();
+      if (jsonResult.result === 0) {
+        return result;
       }
-    } catch (error) {
-      return NextResponse.json({ result: 1, error: "Internal Server Error" }, { status: 500 })
     }
-  }
-
-export async function PATCH(
-  request: NextRequest,
-) {
-  try {
-    const body: Partner_DTO = await request.json();
-
-   const result= await executeQuery('CALL UpdatePartner(?,?,?,?,?,?,?,?)', [
-      body.Id,
-      body.PartnerName,
-      body.PhoneNumber,body.Email,body.Address,body.StartDate,body.EndDate,body.PartnershipStatus
-    ]);
-     
-
-  return NextResponse.json({ result:result }, { status: 200 });
-} catch (error) {
-  return NextResponse.json(
-    { result: 1, error: 'Internal Server Error' },
-    { status: 500 },
-  );
-}
-}
-
-export async function DELETE(
-  request: NextRequest
-) {
-  try {
-    const id = request.nextUrl.searchParams.get("id");
-    const result:any= await executeQuery('CALL DeletePartner(?)', [id]);
-
-    return NextResponse.json({ result: result[0][0].result }, { status: 200 });
+    throw new Error('Failed to add partner');
   } catch (error) {
+    console.error('Error in POST:', error);
     return NextResponse.json(
       { result: 1, error: 'Internal Server Error' },
       { status: 500 },
     );
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  const body: Partner_DTO = await request.json();
+  return db_Provider<any>(
+    'CALL UpdatePartner(?,?,?,?,?,?,?,?)',
+    [
+      body.Id,
+      body.PartnerName,
+      body.PhoneNumber,
+      body.Email,
+      body.Address,
+      body.StartDate,
+      body.EndDate,
+      body.PartnershipStatus,
+    ],
+    true,
+  );
+}
+
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id');
+  return db_Provider<any>('CALL DeletePartner(?)', [id], true);
 }

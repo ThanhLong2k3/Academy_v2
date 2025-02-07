@@ -1,6 +1,6 @@
 import { Button, Space, Popconfirm, Tooltip } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { ColumnType } from 'antd/es/table'; // Import ColumnType
+import type { ColumnType } from 'antd/es/table';
 
 // Define the interface for props
 interface ColumnProps<T> {
@@ -19,25 +19,34 @@ const createColumns = <T,>({
     {
       title: 'Tác vụ',
       key: 'action',
-      width: '150px',
+      width: '10%',
       render: (_: any, record: T) => (
-        <div className="flex gap-2 justify-end">
-          <Button
-            type="primary"
-            shape="circle"
-            icon={<EditOutlined />}
-            className="bg-purple-600 mr-3"
-            style={{marginRight:'10px'}}
-            onClick={() => openModal(record)}
-          />
-          <Button
-            shape="circle"
-            icon={<DeleteOutlined />}
-            className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
-            style={{backgroundColor:'red',color:'white'}}
-            onClick={() => handleDelete(record)}
-          />
-        </div>
+        <Space size="middle">
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<EditOutlined />}
+              className="bg-purple-600"
+              onClick={() => openModal(record)}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Bạn có chắc chắn muốn xóa?"
+            onConfirm={() => handleDelete(record)}
+            okText="Có"
+            cancelText="Không"
+          >
+            <Tooltip title="Xóa">
+              <Button
+                shape="circle"
+                icon={<DeleteOutlined />}
+                style={{ backgroundColor: 'red', color: 'white' }}
+                className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
       ),
     },
   ];

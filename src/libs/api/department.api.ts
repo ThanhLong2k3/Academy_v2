@@ -1,38 +1,24 @@
-import { GetDepartment,AddDepartment } from '@/models/department.model';
-const API_URL = '/api';
-
+import { CallApi } from '@/libs/call_API';
+import { GetDepartment, AddDepartment } from '@/models/department.model';
 export const DepartmentAPI = {
-  getAll: async (): Promise<GetDepartment[]> => {
-    const res = await fetch(`${API_URL}/department`);
-    return res.json();
+  getAllDepartment: async () => {
+    const data: GetDepartment[] =
+      await CallApi.getAll<GetDepartment>('department');
+    return data;
   },
 
-  create: async (data: AddDepartment): Promise<number> => {
-    const res = await fetch(`${API_URL}/department`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+  createDepartment: async (newDepartment: AddDepartment) => {
+    const data = await CallApi.create<number>('department', newDepartment);
+    return data;
   },
 
-  update: async ( data: GetDepartment): Promise<number> => {
-    const res = await fetch(`${API_URL}/department`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+  updateDepartment: async (Department: GetDepartment) => {
+    const data = await CallApi.update<number>('department', Department);
+    return data;
   },
 
-  delete: async (id: number): Promise<void> => {
-    const res = await fetch(`${API_URL}/department?id=${id}`, {
-      method: 'DELETE',
-    });
-    return res.json();
+  deleteDepartment: async (Id: number): Promise<number> => {
+    const data = await CallApi.delete<number>('department', Id);
+    return data;
   },
 };

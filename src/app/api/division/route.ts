@@ -1,72 +1,32 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/libs/db';
-import { Division_DTO,GetDivision } from '@/models/division.model';
+import type { NextRequest } from 'next/server';
+import { db_Provider } from '@/app/api/Api_Provider';
+import type { GetDivision, Division_DTO } from '@/models/division.model';
 export async function GET() {
-  try {
-    const data = await executeQuery<GetDivision[]>('CALL GetDivisions()');
-    return NextResponse.json(data[0]);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
+  return db_Provider<GetDivision[]>('CALL GetDivision()');
 }
-
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: Division_DTO = await request.json();
-
-    await executeQuery('CALL AddDivision(?,?,?, @p_Result)', [body.DivisionName,body.DepartmentId,body.Description]);
-
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-    return NextResponse.json({ result: result[0].Result }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
-}
-
-export async function PATCH(
-  request: NextRequest,
-) {
-  try {
-    const body: Division_DTO = await request.json();
-    await executeQuery('CALL UpdateDivision(?,?,?,?,@p_Result)', [
-      body.Id,
-      body.DivisionName,
-      body.DepartmentId,
-      body.Description
-    ]);
-     console.log(body);
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-  return NextResponse.json({ result: result[0].Result }, { status: 200 });
-} catch (error) {
-  return NextResponse.json(
-    { result: 1, error: 'Internal Server Error' },
-    { status: 500 },
+  const body: Division_DTO = await request.json();
+  return db_Provider<any>(
+    'CALL AddDivision(?,?,?)',
+    [body.DivisionName, body.DepartmentId, body.Description],
+    true,
   );
 }
+
+export async function PATCH(request: NextRequest) {
+  const body: Division_DTO = await request.json();
+  return db_Provider<any>(
+    'CALL UpdateDivision(?,?,?,?)',
+    [body.Id, body.DivisionName, body.DepartmentId, body.Description],
+    true,
+  );
 }
 
-export async function DELETE(
-  request: NextRequest
-) {
-  try {
-    const id = request.nextUrl.searchParams.get("id");
-    await executeQuery('CALL DeleteDivision(?, @p_Result)', [id]);
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-    return NextResponse.json({ result: result[0].Result }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
-      { status: 500 },
-    );
+export async function DELETE(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get('id');
+  if (!id) {
+    return new Response('Missing ID', { status: 400 });
   }
+  return db_Provider<any>('CALL DeleteDivision(?)', [id], true);
 }
