@@ -17,7 +17,8 @@ import {
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
-
+import { useColorState } from '@/stores/color.store';
+import styles from '@/modules/shared/siderbar/siderbar';
 type MenuItem = Required<MenuProps>['items'][number];
 
 const routeMap: { [key: string]: string } = {
@@ -31,12 +32,13 @@ const routeMap: { [key: string]: string } = {
   '3': '/Customers',
   '5': '/Products',
   '9': '/Intellectual-Property',
-  '11': '/Departments',
+  '11': '/vi/department',
 };
 
 const SideBar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { themeColor } = useColorState();
 
   const getCurrentKey = useCallback(() => {
     const entry = Object.entries(routeMap).find(
@@ -137,12 +139,22 @@ const SideBar = () => {
     [],
   );
 
+  const textColor = themeColor?.token?.colorPrimary ? '#ffffff' : '#000000';
+
   return (
-    <div className="h-full flex flex-col">
+    <div
+      className="h-full flex flex-col"
+      style={{
+        backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+        color: textColor,
+        height: '100vh',
+      }}
+    >
       <div
         className="flex items-center justify-center h-16 px-4"
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+          color: textColor,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',
           justifyContent: 'center',
@@ -162,9 +174,16 @@ const SideBar = () => {
       <div className="flex-1 overflow-y-auto">
         <ConfigProvider
           theme={{
+            token: {
+              colorBgContainer: themeColor?.token?.colorPrimary || '#ffffff',
+              colorText: textColor,
+            },
             components: {
               Menu: {
                 itemHeight: 30,
+                itemColor: textColor,
+                itemHoverColor: textColor,
+                colorItemTextSelectedHorizontal: textColor,
               },
             },
           }}
@@ -176,6 +195,10 @@ const SideBar = () => {
             selectedKeys={[getCurrentKey()]}
             mode="inline"
             items={sidebarItems}
+            style={{
+              backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+              color: textColor,
+            }}
           />
         </ConfigProvider>
       </div>
