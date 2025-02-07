@@ -1,22 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Space,
-  Card,
-  Divider,
-  message,
-} from 'antd';
-import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { GetPosition } from '@/models/position.model';
 import { PositionAPI } from '@/libs/api/position.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
@@ -24,6 +10,7 @@ import { Position_Colum } from '../../../components/position/position_Table';
 import { PositionForm } from '../../../components/position/position_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
+
 const PositionPage = () => {
   const [positions, setPositions] = useState<GetPosition[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,10 +18,11 @@ const PositionPage = () => {
   const [editingPosition, setEditingPosition] = useState<GetPosition | null>(
     null,
   );
-  const [isEditing, setIsDelete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
   const { show } = useNotification();
+
   useEffect(() => {
     GetAllPosition();
   }, []);
@@ -42,7 +30,7 @@ const PositionPage = () => {
   const GetAllPosition = async () => {
     try {
       setLoading(true);
-      const data = await PositionAPI.getAll();
+      const data = await PositionAPI.getAllPosition();
       setPositions(data);
     } catch (error) {
       show({
@@ -67,23 +55,31 @@ const PositionPage = () => {
     setPositions(filteredData);
   };
 
-  const openModal = (record: GetPosition) => {
-    setEditingPosition(record);
-    form.setFieldsValue(record);
-    setModalVisible(true);
-    setIsDelete(true);
-  };
-
-  const closeModal = () => {
+  // Modal Functions
+  const openCreateModal = () => {
     setEditingPosition(null);
-    setIsDelete(false);
+    setIsEditing(false);
     form.resetFields();
     setModalVisible(true);
   };
 
+  const openEditModal = (record: GetPosition) => {
+    setEditingPosition(record);
+    setIsEditing(true);
+    form.setFieldsValue(record);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setEditingPosition(null);
+    setIsEditing(false);
+    form.resetFields();
+  };
+
   const handleDelete = async (record: GetPosition) => {
     try {
-      const data: any = await PositionAPI.delete(record.Id);
+      const data: any = await PositionAPI.deletePosition(record.Id);
       show({
         result: data.result,
         messageDone: 'Xóa chức vụ thành công',
@@ -103,23 +99,25 @@ const PositionPage = () => {
       const values = await form.validateFields();
       setLoading(true);
       let result: any;
+
       if (editingPosition) {
-        result = await PositionAPI.update(values);
+        result = await PositionAPI.updatePosition(values);
         show({
           result: result.result,
           messageDone: 'Cập nhật chức vụ thành công',
           messageError: 'Cập nhật chức vụ thất bại',
         });
       } else {
-        result = await PositionAPI.create(values);
+        result = await PositionAPI.createPosition(values);
         show({
           result: result.result,
           messageDone: 'Thêm chức vụ thành công',
           messageError: 'Thêm chức vụ thất bại',
         });
       }
+
       await GetAllPosition();
-      setModalVisible(false);
+      closeModal();
     } catch (error) {
       show({
         result: 1,
@@ -132,7 +130,7 @@ const PositionPage = () => {
 
   const columns = COLUMNS({
     columnType: Position_Colum,
-    openModal: openModal,
+    openModal: openEditModal,
     handleDelete: handleDelete,
   });
 
@@ -141,7 +139,7 @@ const PositionPage = () => {
       {/* Tier 1: Title and Add Button */}
       <Header_Children
         title={'Quản lý chức vụ'}
-        closeModal={closeModal}
+        onAdd={openCreateModal}
         text_btn_add="Thêm chức vụ"
       />
 
@@ -193,9 +191,7 @@ const PositionPage = () => {
         title={editingPosition ? 'Cập nhập chức vụ' : 'Thêm chức vụ'}
         open={modalVisible}
         onOk={handleSave}
-        onCancel={() => {
-          closeModal();
-        }}
+        onCancel={closeModal}
         width="60%"
       >
         <PositionForm formdulieu={form} isEditing={isEditing} />

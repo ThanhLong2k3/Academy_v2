@@ -1,11 +1,14 @@
 import { ColumnType } from '../UI_shared/ColumType';
+
 export const Position_Colum: ColumnType[] = [
   {
-    title: 'Mã chức vụ',
-    dataIndex: 'Id',
-    key: 'Id',
+    title: 'Số thứ tự',
+    key: 'stt',
     width: '10%',
     align: 'center',
+    render: (_text, _record, index) => (
+      <span>{index !== undefined ? index + 1 : ''}</span>
+    ),
   },
   {
     title: 'Tên chức vụ',
