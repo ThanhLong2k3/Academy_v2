@@ -18,7 +18,7 @@ import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import { useColorState } from '@/stores/color.store';
-import styles from '@/modules/shared/siderbar/siderbar';
+import styles from './siderbar.module.scss';
 type MenuItem = Required<MenuProps>['items'][number];
 
 const routeMap: { [key: string]: string } = {
@@ -171,7 +171,7 @@ const SideBar = () => {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.menuContainer}>
         <ConfigProvider
           theme={{
             token: {

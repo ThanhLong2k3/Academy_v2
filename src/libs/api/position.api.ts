@@ -6,6 +6,16 @@ export const PositionAPI = {
     const data: GetPosition[] = await CallApi.getAll<GetPosition>('position');
     return data;
   },
+  getPositionsByPageOrder: async (
+    pageIndex: number,
+    pageSize: number,
+    orderType: 'ASC' | 'DESC',
+  ) => {
+    const data: GetPosition[] = await CallApi.getAll<GetPosition>(
+      `position?pageIndex=${pageIndex}&pageSize=${pageSize}&orderType=${orderType}`,
+    );
+    return data;
+  },
 
   createPosition: async (newPosition: AddPosistion) => {
     const data = await CallApi.create<number>('position', newPosition);

@@ -20,17 +20,32 @@ const PositionPage = () => {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [orderType, setOrderType] = useState<'ASC' | 'DESC'>('ASC');
   const [form] = Form.useForm();
+  const [total, setTotal] = useState<number>(10);
   const { show } = useNotification();
 
   useEffect(() => {
-    GetAllPosition();
-  }, []);
+    GetPositionsByPageOrder(currentPage, pageSize, orderType);
+  }, [currentPage, pageSize, orderType]);
 
-  const GetAllPosition = async () => {
+  const GetPositionsByPageOrder = async (
+    pageIndex: number,
+    pageSize: number,
+    orderType: 'ASC' | 'DESC',
+  ) => {
     try {
+      debugger;
+
       setLoading(true);
-      const data = await PositionAPI.getAllPosition();
+      const data = await PositionAPI.getPositionsByPageOrder(
+        pageIndex,
+        pageSize,
+        orderType,
+      );
+      setTotal(data.length);
       setPositions(data);
     } catch (error) {
       show({
@@ -44,7 +59,7 @@ const PositionPage = () => {
 
   const handleRefresh = () => {
     setSearchText('');
-    GetAllPosition();
+    GetPositionsByPageOrder(1, pageSize, orderType);
   };
 
   const handleSearch = (value: string) => {
@@ -55,7 +70,6 @@ const PositionPage = () => {
     setPositions(filteredData);
   };
 
-  // Modal Functions
   const openCreateModal = () => {
     setEditingPosition(null);
     setIsEditing(false);
@@ -85,7 +99,7 @@ const PositionPage = () => {
         messageDone: 'Xóa chức vụ thành công',
         messageError: 'Xóa chức vụ thất bại',
       });
-      GetAllPosition();
+      GetPositionsByPageOrder(currentPage, pageSize, orderType);
     } catch (error) {
       show({
         result: 1,
@@ -116,7 +130,7 @@ const PositionPage = () => {
         });
       }
 
-      await GetAllPosition();
+      await GetPositionsByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {
       show({
@@ -136,7 +150,6 @@ const PositionPage = () => {
 
   return (
     <Card className="p-6">
-      {/* Tier 1: Title and Add Button */}
       <Header_Children
         title={'Quản lý chức vụ'}
         onAdd={openCreateModal}
@@ -145,7 +158,6 @@ const PositionPage = () => {
 
       <hr />
 
-      {/* Tier 2: Search and Refresh */}
       <div className="py-4">
         <Space size="middle">
           <Input.Search
@@ -168,7 +180,6 @@ const PositionPage = () => {
         </Space>
       </div>
 
-      {/* Tier 3: Data Table */}
       <div className="py-4">
         <Table
           columns={columns}
@@ -177,16 +188,20 @@ const PositionPage = () => {
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
-            total: positions.length,
-            pageSize: 10,
+            current: currentPage,
+            pageSize: pageSize,
+            total: total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
           }}
         />
       </div>
 
-      {/* Modal Form */}
       <Modal
         title={editingPosition ? 'Cập nhập chức vụ' : 'Thêm chức vụ'}
         open={modalVisible}
