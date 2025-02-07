@@ -1,4 +1,4 @@
-import { GetPosition, AddPoistion } from '../../models/position.model';
+import { GetPosition, AddPosition } from '../../models/position.model';
 
 const API_URL = '/api';
 
@@ -8,7 +8,7 @@ export const PositionAPI = {
     return res.json();
   },
 
-  create: async (data: AddPoistion): Promise<number> => {
+  create: async (data: AddPosition): Promise<number> => {
     const res = await fetch(`${API_URL}/position`, {
       method: 'POST',
       headers: {
@@ -19,7 +19,7 @@ export const PositionAPI = {
     return res.json();
   },
 
-  update: async ( data: GetPosition): Promise<number> => {
+  update: async (data: GetPosition): Promise<number> => {
     const res = await fetch(`${API_URL}/position`, {
       method: 'PATCH',
       headers: {

@@ -1,4 +1,4 @@
-import { GetPosition, AddPoistion } from './../../../models/position.model';
+import { GetPosition, AddPosition } from './../../../models/position.model';
 import { type NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/libs/db';
 
@@ -14,13 +14,11 @@ export async function GET() {
   }
 }
 
-
-
 export async function POST(request: NextRequest) {
   try {
-    const body: AddPoistion = await request.json();
+    const body: AddPosition = await request.json();
 
-    await executeQuery('CALL AddPosition(?, @p_Result)', [body.PositionName]);
+    await executeQuery('CALL AddPosition1(?, @p_Result)', [body.PositionName]);
 
     const result: any = await executeQuery('SELECT @p_Result AS Result');
 
@@ -33,9 +31,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-) {
+export async function PATCH(request: NextRequest) {
   try {
     const body: GetPosition = await request.json();
 
@@ -43,23 +39,21 @@ export async function PATCH(
       body.Id,
       body.PositionName,
     ]);
-     
+
     const result: any = await executeQuery('SELECT @p_Result AS Result');
 
-  return NextResponse.json({ result: result[0].Result }, { status: 200 });
-} catch (error) {
-  return NextResponse.json(
-    { result: 1, error: 'Internal Server Error' },
-    { status: 500 },
-  );
-}
+    return NextResponse.json({ result: result[0].Result }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { result: 1, error: 'Internal Server Error' },
+      { status: 500 },
+    );
+  }
 }
 
-export async function DELETE(
-  request: NextRequest
-) {
+export async function DELETE(request: NextRequest) {
   try {
-    const id = request.nextUrl.searchParams.get("id");
+    const id = request.nextUrl.searchParams.get('id');
     await executeQuery('CALL DeletePosition(?, @p_Result)', [id]);
     const result: any = await executeQuery('SELECT @p_Result AS Result');
 
