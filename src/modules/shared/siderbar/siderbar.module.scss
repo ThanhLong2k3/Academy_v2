@@ -1,0 +1,7 @@
+.menuContainer {
+  :global {
+    .ant-menu-light .ant-menu-submenu-selected > .ant-menu-submenu-title {
+      color: inherit !important;
+    }
+  }
+}

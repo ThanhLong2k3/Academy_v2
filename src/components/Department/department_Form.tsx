@@ -11,12 +11,12 @@ export const DepartmentForm: React.FC<ReusableFormProps> = ({ formdulieu }) => (
   <Form form={formdulieu} layout="vertical">
     <Form.Item
       name="DepartmentName"
-      label="Tên phòng ban"
+      label="Tên đơn vị"
       rules={RULES_FORM.required}
     >
       <Input />
     </Form.Item>
-    <Form.Item name="Description" label="Mô tả">
+    <Form.Item name="Description" label="Mô tả" rules={RULES_FORM.required}>
       <TextArea />
     </Form.Item>
   </Form>
