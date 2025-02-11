@@ -1,24 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Space,
-  Card,
-  Divider,
-  message,
-} from 'antd';
-import {
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { GetPosition } from '@/models/position.model';
 import { PositionAPI } from '@/libs/api/position.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
@@ -44,24 +28,24 @@ const PositionPage = () => {
   const { show } = useNotification();
 
   useEffect(() => {
-    GetPositionsByPageOrder(currentPage, pageSize, orderType);
+    GetPositionsByPageOrder(currentPage, pageSize, orderType, searchText);
   }, [currentPage, pageSize, orderType]);
 
   const GetPositionsByPageOrder = async (
     pageIndex: number,
     pageSize: number,
     orderType: 'ASC' | 'DESC',
+    positionName?: string,
   ) => {
     try {
-      debugger;
-
       setLoading(true);
       const data = await PositionAPI.getPositionsByPageOrder(
         pageIndex,
         pageSize,
         orderType,
+        positionName,
       );
-      setTotal(data.length);
+      setTotal(data[0].TotalRecords);
       setPositions(data);
     } catch (error) {
       show({
@@ -79,11 +63,7 @@ const PositionPage = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchText(value);
-    const filteredData = positions.filter((position) =>
-      position.PositionName?.toLowerCase().includes(value.toLowerCase()),
-    );
-    setPositions(filteredData);
+    GetPositionsByPageOrder(1, pageSize, orderType, value);
   };
 
   const openCreateModal = () => {
@@ -181,8 +161,7 @@ const PositionPage = () => {
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
+            onSearch={handleSearch}
             style={{ width: 300 }}
           />
           <Button
