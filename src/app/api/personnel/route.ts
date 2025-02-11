@@ -3,17 +3,16 @@ import { executeQuery } from '@/libs/db';
 import { Division_DTO, GetDivision } from '@/models/division.model';
 import { GetPersonnel_DTO, Personnel_DTO } from '@/models/personnel.model';
 import { db_Provider } from '@/app/api/Api_Provider';
-export async function GET() {
-  try {
-    const data = await executeQuery<GetPersonnel_DTO[]>('CALL GetPersonnel()');
-    return NextResponse.json(data[0]);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
-  }
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const pageIndex = Number(searchParams.get('pageIndex')) || 1;
+  const pageSize = Number(searchParams.get('pageSize')) || 10;
+  const orderType = (searchParams.get('orderType') as 'ASC' | 'DESC') || 'ASC';
+
+  return getPersonnelsByPageOrder(pageIndex, pageSize, orderType);
 }
+
 export async function getPersonnelsByPageOrder(
   pageIndex: number,
   pageSize: number,
@@ -23,6 +22,7 @@ export async function getPersonnelsByPageOrder(
     const result = await db_Provider<GetPersonnel_DTO[]>(
       `CALL GetPersonnelByPageOrder(${pageIndex}, ${pageSize}, '${orderType}')`,
     );
+
     return result;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách chức vụ:', error);

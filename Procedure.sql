@@ -200,3 +200,45 @@ END$$
 
 DELIMITER ;
 
+
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE GetPositionsByPageOrder(
+    IN p_PageIndex INT,         -- Trang hiện tại
+    IN p_PageSize INT,          -- Số dòng trên mỗi trang
+    IN p_OrderType VARCHAR(4),  -- 'ASC' hoặc 'DESC'
+    IN p_PositionName VARCHAR(255)  -- Tên vị trí cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_PositionFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_PositionName IS NOT NULL AND p_PositionName != '' THEN
+        SET v_PositionFilter = CONCAT(" AND PositionName LIKE '%", p_PositionName, "%' ");
+    ELSE
+        SET v_PositionFilter = "";
+    END IF;
+
+    -- Xây dựng SQL lấy danh sách vị trí kèm tổng số bản ghi
+    SET @sql = CONCAT(
+        'SELECT *, COUNT(*) OVER () AS TotalRecords FROM Position WHERE isdeleted=0',
+        v_PositionFilter,
+        ' ORDER BY PositionName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Debug câu SQL (nếu cần kiểm tra)
+    -- SELECT @sql;
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
