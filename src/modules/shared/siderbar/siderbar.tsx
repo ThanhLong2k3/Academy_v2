@@ -24,7 +24,7 @@ type MenuItem = Required<MenuProps>['items'][number];
 const routeMap: { [key: string]: string } = {
   '12': '/vi/position',
   '10': '/vi/division',
-  '1': '/Staff',
+  '1': '/vi/personnel',
   '6': '/Projects',
   '7': '/Topics',
   '8': '/Training',
