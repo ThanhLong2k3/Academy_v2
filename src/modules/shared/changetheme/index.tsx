@@ -64,9 +64,9 @@ const ThemeChanger = () => {
       />
 
       <button
-        onClick={() => setThemeColor({ token: { colorPrimary: '#52c41a' } })}
+        onClick={() => setThemeColor({ token: { colorPrimary: '#CDC9C9' } })}
         style={{
-          backgroundColor: '#52c41a',
+          backgroundColor: '#CDC9C9',
           borderRadius: '50%',
           height: '15px',
           width: '15px',
@@ -75,9 +75,9 @@ const ThemeChanger = () => {
         }}
       />
       <button
-        onClick={() => setThemeColor({ token: { colorPrimary: '#fffffff' } })}
+        onClick={() => setThemeColor({ token: { colorPrimary: '#6BB11A' } })}
         style={{
-          backgroundColor: '#fffffff',
+          backgroundColor: '#6BB11A',
           borderRadius: '50%',
           height: '15px',
           width: '15px',
