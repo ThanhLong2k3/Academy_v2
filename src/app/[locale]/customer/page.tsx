@@ -3,87 +3,78 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { GetDivision } from '@/models/division.model';
-import { divisionAPI } from '@/libs/api/division.api';
+import type { GetCustomer } from '@/models/customer.model';
+import { CustomerAPI } from '@/libs/api/customer.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
-import { DivisiontForm } from '@/components/division/division_Form';
-import { Division_Colum } from '@/components/division/division_Table';
+import { Customer_Colum } from '@/components/customer/customer_Table';
+import { CustomerForm } from '@/components/customer/customer_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
-
-const DivisionPage = () => {
-  const [Divisions, setDivisions] = useState<GetDivision[]>([]);
+import { showDateFormat } from '@/utils/date';
+const CustomerPage = () => {
+  const [Customers, setCustomers] = useState<GetCustomer[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingDivision, setEditingDivision] = useState<GetDivision | null>(
+  const [editingCustomer, setEditingCustomer] = useState<GetCustomer | null>(
     null,
   );
   const [isEditing, setIsEditing] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [form] = Form.useForm();
-  const { show } = useNotification();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [orderType, setOrderType] = useState<'ASC' | 'DESC'>('ASC');
+  const [form] = Form.useForm();
   const [total, setTotal] = useState<number>(10);
+  const { show } = useNotification();
 
   useEffect(() => {
-    GetPositionsByPageOrder(currentPage, pageSize, orderType, searchText);
-  }, [currentPage, pageSize, orderType]);
+    GetCustomersByPageOrder(currentPage, pageSize, orderType, searchText);
+  }, [currentPage, pageSize, orderType, searchText]);
 
-  const GetPositionsByPageOrder = async (
+  const GetCustomersByPageOrder = async (
     pageIndex: number,
     pageSize: number,
     orderType: 'ASC' | 'DESC',
-    divisionName?: string,
-    departmentName?: string,
+    CustomerName?: string,
   ) => {
     try {
       setLoading(true);
-      const data = await divisionAPI.getDivisionByPageOrder(
+      const data = await CustomerAPI.getCustomersByPageOrder(
         pageIndex,
         pageSize,
         orderType,
-        divisionName,
-        departmentName,
+        CustomerName,
       );
       setTotal(data[0].TotalRecords);
-      setDivisions(data);
+      setCustomers(data);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách chức vụ',
+        messageError: 'Lỗi tải danh sách khách hàng',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setSearchText('');
-    await GetPositionsByPageOrder(currentPage, pageSize, orderType);
+    GetCustomersByPageOrder(1, pageSize, orderType);
   };
 
-  const handleSearch = async (value: string) => {
-    await GetPositionsByPageOrder(
-      currentPage,
-      pageSize,
-      orderType,
-      searchText,
-      value,
-    );
+  const handleSearch = (value: string) => {
+    GetCustomersByPageOrder(1, pageSize, orderType, value);
   };
 
-  // Modal Functions
   const openCreateModal = () => {
-    setEditingDivision(null);
+    setEditingCustomer(null);
     setIsEditing(false);
     form.resetFields();
     setModalVisible(true);
   };
 
-  const openEditModal = (record: GetDivision) => {
-    setEditingDivision(record);
+  const openEditModal = (record: GetCustomer) => {
+    setEditingCustomer(record);
     setIsEditing(true);
     form.setFieldsValue(record);
     setModalVisible(true);
@@ -91,72 +82,70 @@ const DivisionPage = () => {
 
   const closeModal = () => {
     setModalVisible(false);
-    setEditingDivision(null);
+    setEditingCustomer(null);
     setIsEditing(false);
     form.resetFields();
   };
 
-  const handleDelete = async (record: GetDivision) => {
+  const handleDelete = async (record: GetCustomer) => {
     try {
-      const data: any = await divisionAPI.deletedivision(record.Id);
+      const data: any = await CustomerAPI.deleteCustomer(record.Id);
       show({
         result: data.result,
-        messageDone: 'Xóa bộ phận thành công',
-        messageError: 'Xóa bộ phận thất bại',
+        messageDone: 'Xóa khách hàng thành công',
+        messageError: 'Xóa khách hàng thất bại',
       });
-      await GetPositionsByPageOrder(
-        currentPage,
-        pageSize,
-        orderType,
-        searchText,
-      );
+      GetCustomersByPageOrder(currentPage, pageSize, orderType);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi xóa bộ phận',
+        messageError: 'Lỗi xóa khách hàng',
       });
     }
   };
 
   const handleSave = async () => {
     try {
-      const values = await form.validateFields();
+      const values: any = await form.validateFields();
       setLoading(true);
       let result: any;
 
-      if (editingDivision) {
-        const value = {
-          Id: editingDivision.Id,
-          DivisionName: values.DivisionName,
-          DepartmentId: values.DepartmentId,
-          Description: values.Description,
+      if (editingCustomer) {
+        const newCustomer = {
+          Id: editingCustomer.Id,
+          CustomerName: values.CustomerName,
+          PhoneNumber: values.PhoneNumber,
+          Email: values.Email,
+          Address: values.Address,
         };
-        result = await divisionAPI.updatedivision(value);
+        result = await CustomerAPI.updateCustomer(newCustomer);
         show({
           result: result.result,
-          messageDone: 'Cập nhật bộ phận thành công',
-          messageError: 'Cập nhật bộ phận thất bại',
+          messageDone: 'Cập nhật khách hàng thành công',
+          messageError: 'Cập nhật khách hàng thất bại',
         });
       } else {
-        result = await divisionAPI.createdivision(values);
-        show({
-          result: result.result,
-          messageDone: 'Thêm bộ phận thành công',
-          messageError: 'Thêm bộ phận thất bại',
-        });
+        if (values.EndDate > values.StartDate) {
+          result = await CustomerAPI.createCustomer(values);
+          show({
+            result: result.result,
+            messageDone: 'Thêm khách hàng thành công',
+            messageError: 'Thêm khách hàng thất bại',
+          });
+        } else {
+          show({
+            result: 1,
+            messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
+          });
+        }
       }
-      await GetPositionsByPageOrder(
-        currentPage,
-        pageSize,
-        orderType,
-        searchText,
-      );
 
+      await GetCustomersByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi lưu bộ phận',
+        messageError: 'Lỗi lưu khách hàng',
       });
     } finally {
       setLoading(false);
@@ -164,27 +153,25 @@ const DivisionPage = () => {
   };
 
   const columns = COLUMNS({
-    columnType: Division_Colum,
+    columnType: Customer_Colum,
     openModal: openEditModal,
     handleDelete: handleDelete,
   });
 
   return (
     <Card className="p-6">
-      {/* Tier 1: Title and Add Button */}
       <Header_Children
-        title={'Quản lý bộ phận'}
+        title={'Quản lý khách hàng'}
         onAdd={openCreateModal}
-        text_btn_add="Thêm bộ phận"
+        text_btn_add="Thêm khách hàng"
       />
 
       <hr />
 
-      {/* Tier 2: Search and Refresh */}
       <div className="py-4">
         <Space size="middle">
           <Input.Search
-            placeholder="Search Divisions..."
+            placeholder="Search Customers..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
@@ -202,17 +189,17 @@ const DivisionPage = () => {
         </Space>
       </div>
 
-      {/* Tier 3: Data Table */}
       <div className="py-4">
         <Table
           columns={columns}
-          dataSource={Divisions}
+          dataSource={Customers}
           rowKey="Id"
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
-            total: total,
+            current: currentPage,
             pageSize: pageSize,
+            total: total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
@@ -224,18 +211,17 @@ const DivisionPage = () => {
         />
       </div>
 
-      {/* Modal Form */}
       <Modal
-        title={editingDivision ? 'Cập nhập bộ phận' : 'Thêm bộ phận'}
+        title={editingCustomer ? 'Cập nhập khách hàng' : 'Thêm khách hàng'}
         open={modalVisible}
         onOk={handleSave}
         onCancel={closeModal}
         width="60%"
       >
-        <DivisiontForm formdulieu={form} />
+        <CustomerForm formdulieu={form} />
       </Modal>
     </Card>
   );
 };
 
-export default DivisionPage;
+export default CustomerPage;
