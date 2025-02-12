@@ -34,7 +34,7 @@ export const DepartmentAPI = {
     return data;
   },
 
-  updateDepartment: async (Department: GetDepartment) => {
+  updateDepartment: async (Department: AddDepartment) => {
     const data = await CallApi.update<number>('department', Department);
     return data;
   },

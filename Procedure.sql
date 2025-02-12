@@ -163,35 +163,28 @@ CREATE PROCEDURE GetDepartmentByPageOrder(
 )
 BEGIN
     DECLARE v_Offset INT;
-    DECLARE v_DepartmentFilter VARCHAR(400);
     SET v_Offset = (p_PageIndex - 1) * p_PageSize;
 
-    -- Handle search condition
-    IF p_DepartmentName IS NOT NULL AND p_DepartmentName != '' THEN
-        SET v_DepartmentFilter = CONCAT(" AND DepartmentName LIKE '%", p_DepartmentName, "%' ");
-    ELSE
-        SET v_DepartmentFilter = "";
-    END IF;
-
-    -- Build SQL to get department list with total record count
-    SET @sql = CONCAT(
-        'SELECT *, COUNT(*) OVER () AS TotalRecords FROM Department WHERE IsDeleted = 0',
-        v_DepartmentFilter,
-        ' ORDER BY DepartmentName ', p_OrderType,
-        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
-    );
-
-    -- Debug SQL (if needed)
-    -- SELECT @sql;
-
-    -- Execute dynamic SQL
-    PREPARE stmt FROM @sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
+    -- Truy vấn danh sách Department cùng số lượng Division của từng Department
+    SELECT 
+        d.Id AS DepartmentId,
+        d.DepartmentName,
+        d.Description,
+        COUNT(dv.Id) AS TotalDivisions,  -- Đếm số lượng Division
+        COUNT(*) OVER () AS TotalRecords
+    FROM Department d
+    LEFT JOIN Division dv ON d.Id = dv.DepartmentId AND dv.IsDeleted = 0  -- Đổi bí danh từ 'div' thành 'dv'
+    WHERE d.IsDeleted = 0
+        AND (p_DepartmentName IS NULL OR p_DepartmentName = '' OR d.DepartmentName LIKE CONCAT('%', p_DepartmentName, '%'))
+    GROUP BY d.Id, d.DepartmentName, d.Description
+    ORDER BY d.DepartmentName 
+    LIMIT p_PageSize OFFSET v_Offset;
 END$$
 
 DELIMITER ;
 
+
+CALL GetDepartmentByPageOrder(1,20,'ASC',NULL)
 DELIMITER ;
 
 
@@ -547,4 +540,4 @@ END$$
 
 DELIMITER ;
 
-
+SELECT COUNT(*) FROM division  WHERE 

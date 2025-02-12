@@ -2,6 +2,7 @@ export interface GetDepartment {
   Id: number;
   DepartmentName: string;
   Description: string;
+  TotalDivisions: number;
   TotalRecords: number;
 }
 

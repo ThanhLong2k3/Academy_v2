@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { GetCustomer } from '@/models/customer.model';
+import type { AddCustomer, GetCustomer } from '@/models/customer.model';
 import { CustomerAPI } from '@/libs/api/customer.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
 import { Customer_Colum } from '@/components/customer/customer_Table';
 import { CustomerForm } from '@/components/customer/customer_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
-import { showDateFormat } from '@/utils/date';
 const CustomerPage = () => {
   const [Customers, setCustomers] = useState<GetCustomer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -103,42 +102,40 @@ const CustomerPage = () => {
       });
     }
   };
+  const addCustomer = async (newCustomer: any) => {
+    const result: any = await CustomerAPI.createCustomer(newCustomer);
+    show({
+      result: result.result,
+      messageDone: 'Thêm khách hàng thành công',
+      messageError: 'Thêm khách hàng thất bại',
+    });
+  };
 
+  const updateCustomer = async (Customer: AddCustomer) => {
+    if (editingCustomer) {
+      const newCustomer = {
+        Id: editingCustomer.Id,
+        CustomerName: Customer.CustomerName,
+        PhoneNumber: Customer.PhoneNumber,
+        Email: Customer.Email,
+        Address: Customer.Address,
+      };
+      const result: any = await CustomerAPI.updateCustomer(newCustomer);
+      show({
+        result: result.result,
+        messageDone: 'Cập nhật khách hàng thành công',
+        messageError: 'Cập nhật khách hàng thất bại',
+      });
+    }
+  };
   const handleSave = async () => {
     try {
       const values: any = await form.validateFields();
       setLoading(true);
-      let result: any;
 
-      if (editingCustomer) {
-        const newCustomer = {
-          Id: editingCustomer.Id,
-          CustomerName: values.CustomerName,
-          PhoneNumber: values.PhoneNumber,
-          Email: values.Email,
-          Address: values.Address,
-        };
-        result = await CustomerAPI.updateCustomer(newCustomer);
-        show({
-          result: result.result,
-          messageDone: 'Cập nhật khách hàng thành công',
-          messageError: 'Cập nhật khách hàng thất bại',
-        });
-      } else {
-        if (values.EndDate > values.StartDate) {
-          result = await CustomerAPI.createCustomer(values);
-          show({
-            result: result.result,
-            messageDone: 'Thêm khách hàng thành công',
-            messageError: 'Thêm khách hàng thất bại',
-          });
-        } else {
-          show({
-            result: 1,
-            messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
-          });
-        }
-      }
+      editingCustomer
+        ? await updateCustomer(values)
+        : await addCustomer(values);
 
       await GetCustomersByPageOrder(currentPage, pageSize, orderType);
       closeModal();
