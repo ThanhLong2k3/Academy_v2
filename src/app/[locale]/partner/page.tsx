@@ -197,7 +197,7 @@ const PartnerPage = () => {
         </Space>
       </div>
 
-      <div className="py-4">
+      <div className="py-4" style={{ marginTop: '20px' }}>
         <Table
           columns={columns}
           dataSource={Partners}
