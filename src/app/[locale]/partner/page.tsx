@@ -108,46 +108,51 @@ const PartnerPage = () => {
       });
     }
   };
+  const AddPartner = async (value: any) => {
+    debugger;
+    if (value.EndDate == undefined) {
+      const result: any = await PartnerAPI.createPartner(value);
+      show({
+        result: result.result,
+        messageDone: 'Thêm đối tác thành công',
+        messageError: 'Thêm đối tác thất bại',
+      });
+    }
+    if (value.EndDate > value.StartDate) {
+      const result: any = await PartnerAPI.createPartner(value);
+      show({
+        result: result.result,
+        messageDone: 'Thêm đối tác thành công',
+        messageError: 'Thêm đối tác thất bại',
+      });
+    } else {
+      show({
+        result: 1,
+        messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
+      });
+    }
+  };
 
+  const UpdatePartner = async (Id: number, value: any) => {
+    const newPartner = {
+      Id: Id,
+      ...value,
+    };
+    const result: any = await PartnerAPI.updatePartner(newPartner);
+    show({
+      result: result.result,
+      messageDone: 'Cập nhật đối tác thành công',
+      messageError: 'Cập nhật đối tác thất bại',
+    });
+  };
   const handleSave = async () => {
     try {
       const values: any = await form.validateFields();
       setLoading(true);
-      let result: any;
 
-      if (editingPartner) {
-        const newPartner = {
-          Id: editingPartner.Id,
-          PartnerName: values.PartnerName,
-          PhoneNumber: values.PhoneNumber,
-          Email: values.Email,
-          Address: values.Address,
-          StartDate: values.StartDate,
-          EndDate: values.EndDate,
-          PartnershipStatus: values.PartnershipStatus,
-        };
-        result = await PartnerAPI.updatePartner(newPartner);
-        show({
-          result: result.result,
-          messageDone: 'Cập nhật đối tác thành công',
-          messageError: 'Cập nhật đối tác thất bại',
-        });
-      } else {
-        if (values.EndDate > values.StartDate) {
-          result = await PartnerAPI.createPartner(values);
-          show({
-            result: result.result,
-            messageDone: 'Thêm đối tác thành công',
-            messageError: 'Thêm đối tác thất bại',
-          });
-        } else {
-          show({
-            result: 1,
-            messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
-          });
-        }
-      }
-
+      editingPartner
+        ? await UpdatePartner(editingPartner.Id, values)
+        : await AddPartner(values);
       await Partner_DTOsByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {

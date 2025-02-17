@@ -1,5 +1,4 @@
 CREATE DATABASE Academi_v4;
-USE Academi_v4;
 
 
 CREATE TABLE users (
@@ -94,7 +93,6 @@ CREATE TABLE Project(
     ProjectStartDate DATE,
     ProjectEndDate DATE NULL,
     ProjectStatus NVARCHAR(50),
-    DocumentLink TEXT,
     IsDeleted BOOLEAN DEFAULT 0,
     FOREIGN KEY (DepartmentId) REFERENCES Department(Id) ON UPDATE CASCADE,
     FOREIGN KEY (PartnerId) REFERENCES Partner(Id) ON UPDATE CASCADE,
@@ -109,7 +107,6 @@ CREATE TABLE Product(
     ProductStartDate DATE,
     ProductEndDate DATE NULL,
     ProductStatus NVARCHAR(50),
-    DocumentLink TEXT,
     IsDeleted BOOLEAN DEFAULT 0,
     FOREIGN KEY (DepartmentId) REFERENCES Department(Id) ON UPDATE CASCADE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -124,7 +121,6 @@ CREATE TABLE Topic(
     TopicEndDate DATE NULL,
     Description TEXT NULL,
     TopicStatus NVARCHAR(50),
-    DocumentLink TEXT,
     IsDeleted BOOLEAN DEFAULT 0,
     FOREIGN KEY (DepartmentId) REFERENCES Department(Id) ON UPDATE CASCADE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

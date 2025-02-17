@@ -13,6 +13,7 @@ import {
   WalletOutlined,
   BankOutlined,
   FolderOutlined,
+  CustomerServiceOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
@@ -25,14 +26,15 @@ const routeMap: { [key: string]: string } = {
   '12': '/vi/position',
   '10': '/vi/division',
   '1': '/Staff',
-  '6': '/Projects',
+  '6': '/vi/project',
   '7': '/Topics',
   '8': '/Training',
   '2': '/vi/partner',
   '3': '/vi/customer',
-  '5': '/Products',
+  '5': '/vi/product',
   '9': '/Intellectual-Property',
   '11': '/vi/department',
+  '13': '/vi/services',
 };
 
 const SideBar = () => {
@@ -107,6 +109,11 @@ const SideBar = () => {
             icon: <BankOutlined />,
           },
           {
+            key: '13',
+            label: 'Quản lý dịch vụ',
+            icon: <CustomerServiceOutlined />,
+          },
+          {
             key: '9',
             label: 'Sở hữu trí tuệ',
             icon: <SettingOutlined />,
@@ -153,7 +160,7 @@ const SideBar = () => {
       <div
         className="flex items-center justify-center h-16 px-4"
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
           color: textColor,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',
