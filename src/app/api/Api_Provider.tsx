@@ -11,7 +11,14 @@ export async function db_Provider<T>(
 
     if (isModification) {
       // For POST, PATCH, DELETE operations
-      return NextResponse.json({ result: data[0][0].RESULT }, { status: 200 });
+      if (data[0][0].NewId) {
+        return NextResponse.json({ result: data[0][0].NewId }, { status: 200 });
+      } else {
+        return NextResponse.json(
+          { result: data[0][0].RESULT },
+          { status: 200 },
+        );
+      }
     } else {
       // For GET operations
       return NextResponse.json(data[0]);

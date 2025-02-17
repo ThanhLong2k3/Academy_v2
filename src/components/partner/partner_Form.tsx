@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, FormInstance, Row, Col, Select } from 'antd';
 import { RULES_FORM } from '@/utils/validator';
-import TextArea from 'antd/es/input/TextArea';
-import { GetDepartment } from '@/models/department.model';
-import { DepartmentAPI } from '@/libs/api/department.api';
+
 interface ReusableFormProps {
   formdulieu: FormInstance<any> | undefined;
 }
