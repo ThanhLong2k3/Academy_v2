@@ -14,6 +14,13 @@ export const Department_Colum: ColumnType[] = [
     title: 'Tên đơn vị',
     dataIndex: 'DepartmentName',
     key: 'DepartmentName',
-    width: '80%',
+    width: '60%',
+  },
+  {
+    title: 'Số bộ phận',
+    dataIndex: 'TotalDivisions',
+    key: 'TotalDivisions',
+    width: '20%',
+    align: 'center',
   },
 ];

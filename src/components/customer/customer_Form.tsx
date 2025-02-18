@@ -13,7 +13,7 @@ export const CustomerForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
           <Form.Item
             name="CustomerName"
             label="Tên khách hàng"
-            rules={RULES_FORM.full_name}
+            rules={RULES_FORM.people_name}
           >
             <Input />
           </Form.Item>

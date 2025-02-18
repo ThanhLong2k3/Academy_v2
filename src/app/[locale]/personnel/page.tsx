@@ -127,23 +127,25 @@ const PersonnelPage = () => {
       const values = await form.validateFields();
       setLoading(true);
       let result: any;
-      if (editingPersonnel) {
-        result = await PersonnelAPI.updatePersonnel(values); // Sử dụng FormData
-        show({
-          result: result.result,
-          messageDone: 'Cập nhật nhân viên thành công',
-          messageError: 'Cập nhật nhân viên thất bại',
-        });
-      } else {
-        result = await PersonnelAPI.createPersonnel(values);
-        show({
-          result: result.result,
-          messageDone: 'Thêm nhân viên thành công',
-          messageError: 'Thêm nhân viên thất bại',
-        });
-      }
+      console.log(values);
+      debugger;
+      // if (editingPersonnel) {
+      //   result = await PersonnelAPI.updatePersonnel(values);
+      //   show({
+      //     result: result.result,
+      //     messageDone: 'Cập nhật nhân viên thành công',
+      //     messageError: 'Cập nhật nhân viên thất bại',
+      //   });
+      // } else {
+      //   result = await PersonnelAPI.createPersonnel(values);
+      //   show({
+      //     result: result.result,
+      //     messageDone: 'Thêm nhân viên thành công',
+      //     messageError: 'Thêm nhân viên thất bại',
+      //   });
+      // }
 
-      await GetPersonnelsByPageOrder(currentPage, pageSize, orderType);
+      // await GetPersonnelsByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {
       console.error('❌ Lỗi khi lưu nhân viên:', error);

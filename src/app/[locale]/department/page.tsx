@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { GetDepartment } from '@/models/department.model';
+import { AddDepartment, GetDepartment } from '@/models/department.model';
 import { DepartmentAPI } from '@/libs/api/department.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
 import { DepartmentForm } from '@/components/Department/department_Form';
@@ -103,41 +103,36 @@ const DepartmentPage = () => {
       });
     }
   };
+  const addDepartment = async (NewDepartment: AddDepartment) => {
+    const result: any = await DepartmentAPI.createDepartment(NewDepartment);
+    show({
+      result: result.result,
+      messageDone: 'Thêm đơn vị thành công',
+      messageError: 'Thêm đơn vị thất bại',
+    });
+  };
 
+  const updateDepartment = async (Id: number, Department: AddDepartment) => {
+    const Newvalue = {
+      Id: Id,
+      ...Department,
+    };
+    const result: any = await DepartmentAPI.updateDepartment(Newvalue);
+    show({
+      result: result.result,
+      messageDone: 'Cập nhật đơn vị thành công',
+      messageError: 'Cập nhật đơn vị thất bại',
+    });
+  };
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      let result: any;
+      editingDepartment
+        ? await updateDepartment(editingDepartment.Id, values)
+        : await addDepartment(values);
 
-      if (editingDepartment) {
-        const Newvalue = {
-          Id: editingDepartment.Id,
-          DepartmentName: values.DepartmentName,
-          Description: values.Description,
-          TotalRecords: total + 1,
-        };
-        result = await DepartmentAPI.updateDepartment(Newvalue);
-        show({
-          result: result.result,
-          messageDone: 'Cập nhật đơn vị thành công',
-          messageError: 'Cập nhật đơn vị thất bại',
-        });
-      } else {
-        result = await DepartmentAPI.createDepartment(values);
-        show({
-          result: result.result,
-          messageDone: 'Thêm đơn vị thành công',
-          messageError: 'Thêm đơn vị thất bại',
-        });
-      }
-
-      await GetDepartmentsByPageOrder(
-        currentPage,
-        pageSize,
-        orderType,
-        searchText,
-      );
+      await GetDepartmentsByPageOrder(1, pageSize, orderType);
       closeModal();
     } catch (error) {
       show({
@@ -198,7 +193,7 @@ const DepartmentPage = () => {
           scroll={{ x: 800, y: 400 }}
           pagination={{
             total: total,
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,

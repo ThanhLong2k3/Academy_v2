@@ -3,11 +3,7 @@ import { executeQuery } from '@/libs/db';
 import { Division_DTO, GetDivision } from '@/models/division.model';
 import { GetPersonnel_DTO, Personnel_DTO } from '@/models/personnel.model';
 import { db_Provider } from '@/app/api/Api_Provider';
-import path from 'path';
-import { writeFile } from 'fs/promises';
-import { existsSync, mkdirSync } from 'fs';
-import { readFile } from 'fs/promises';
-import { IncomingForm } from 'formidable';
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const pageIndex = Number(searchParams.get('pageIndex')) || 1;
@@ -34,68 +30,28 @@ export async function getPersonnelsByPageOrder(
 
 export async function POST(request: NextRequest) {
   try {
-    const form = new IncomingForm({ multiples: false });
+    const body: Personnel_DTO = await request.json();
 
-    // Parse FormData
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(request, (err: any, fields: any, files: any) => {
-        if (err) reject(err);
-        else resolve([fields, files]);
-      });
-    });
-
-    let picturePath = null;
-
-    // Nếu có ảnh, lưu vào thư mục upload
-    if (files.Picture) {
-      const file = files.Picture[0];
-      const ext = path.extname(file.originalFilename);
-      const timestamp = Date.now();
-      const fileName = `${timestamp}${ext}`;
-      const uploadDir = path.join(process.cwd(), 'public', 'upload');
-
-      await writeFile(path.join(uploadDir, fileName), await file.toBuffer());
-      picturePath = `/upload/${fileName}`;
-    }
-
-    // Tạo object dữ liệu nhân viên
-    const personnelData = {
-      DivisionId: fields.DivisionId,
-      PersonnelName: fields.PersonnelName,
-      PositionId: fields.PositionId,
-      DateOfBirth: fields.DateOfBirth,
-      Picture: picturePath, // Lưu đường dẫn ảnh
-      Email: fields.Email,
-      Description: fields.Description,
-      PhoneNumber: fields.PhoneNumber,
-      JoinDate: fields.JoinDate || null,
-      EndDate: fields.EndDate || null,
-      WorkStatus: fields.WorkStatus,
-    };
-
-    // Lưu vào database
-    await executeQuery('CALL AddPersonnel(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-      personnelData.DivisionId,
-      personnelData.PersonnelName,
-      personnelData.PositionId,
-      personnelData.DateOfBirth,
-      personnelData.Picture,
-      personnelData.Email,
-      personnelData.Description,
-      personnelData.PhoneNumber,
-      personnelData.JoinDate,
-      personnelData.EndDate,
-      personnelData.WorkStatus,
-    ]);
-
-    return NextResponse.json(
-      { message: 'Personnel added successfully' },
-      { status: 200 },
+    return db_Provider<any>(
+      'CALL AddPersonnel(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        body.DivisionId,
+        body.PersonnelName,
+        body.PositionId,
+        body.DateOfBirth,
+        body.Picture,
+        body.Email,
+        body.Description,
+        body.PhoneNumber,
+        body.JoinDate || null,
+        body.EndDate || null,
+        body.WorkStatus,
+      ],
     );
   } catch (error) {
-    console.error('❌ Lỗi khi thêm nhân viên:', error);
+    console.error('Lỗi khi thêm sản phẩm:', error);
     return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
+      { error: 'Không thể thêm sản phẩm.' },
       { status: 500 },
     );
   }

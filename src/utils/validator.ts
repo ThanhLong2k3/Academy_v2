@@ -22,12 +22,14 @@ export const RULES_FORM: Record<keyof keyValidator, FormRule[]> = {
   ],
   email: [
     {
+      required: true,
       pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g,
       message: 'Email không đúng định dạng',
     },
   ],
   phone: [
     {
+      required: true,
       min: 10,
       message: 'Số điện thoại tối thiểu 10 ký tự',
     },
@@ -48,6 +50,7 @@ export const RULES_FORM: Record<keyof keyValidator, FormRule[]> = {
   ],
   username: [
     {
+      required: true,
       pattern: /^[a-zA-Z0-9]{6,10}$/g,
       message:
         'Tài khoản có độ dài 6-10 chữ/số và không chứa khoảng cách và ký tự đặc biệt',
@@ -55,6 +58,7 @@ export const RULES_FORM: Record<keyof keyValidator, FormRule[]> = {
   ],
   password: [
     {
+      required: true,
       pattern:
         /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+{}\\[\]:;<>,.?~\\-]).{8,}$/g,
       message:
@@ -63,6 +67,7 @@ export const RULES_FORM: Record<keyof keyValidator, FormRule[]> = {
   ],
   people_name: [
     {
+      required: true,
       pattern:
         /^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*(?:[ ][A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*)*$/gm,
       message:
@@ -85,6 +90,7 @@ export const RULES_FORM: Record<keyof keyValidator, FormRule[]> = {
   ],
   department_name: [
     {
+      required: true,
       pattern:
         /^[A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*(?:[ ][A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]*)*$/gm,
       message:

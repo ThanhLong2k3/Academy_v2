@@ -1,5 +1,9 @@
 import { CallApi } from '@/libs/call_API';
-import { GetDepartment, AddDepartment } from '@/models/department.model';
+import {
+  GetDepartment,
+  AddDepartment,
+  Department_DTO,
+} from '@/models/department.model';
 export const DepartmentAPI = {
   getAllDepartment: async () => {
     const data: GetDepartment[] =
@@ -22,7 +26,7 @@ export const DepartmentAPI = {
       queryParams.append('departmentName', positionName);
     }
 
-    const data: GetDepartment[] = await CallApi.getAll<GetDepartment>(
+    const data: Department_DTO[] = await CallApi.getAll<Department_DTO>(
       `department?${queryParams.toString()}`,
     );
 
@@ -34,7 +38,7 @@ export const DepartmentAPI = {
     return data;
   },
 
-  updateDepartment: async (Department: GetDepartment) => {
+  updateDepartment: async (Department: AddDepartment) => {
     const data = await CallApi.update<number>('department', Department);
     return data;
   },

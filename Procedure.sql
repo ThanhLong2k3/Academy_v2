@@ -207,34 +207,27 @@ CREATE PROCEDURE GetDepartmentByPageOrder(
 )
 BEGIN
     DECLARE v_Offset INT;
-    DECLARE v_DepartmentFilter VARCHAR(400);
     SET v_Offset = (p_PageIndex - 1) * p_PageSize;
 
-    -- Handle search condition
-    IF p_DepartmentName IS NOT NULL AND p_DepartmentName != '' THEN
-        SET v_DepartmentFilter = CONCAT(" AND DepartmentName LIKE '%", p_DepartmentName, "%' ");
-    ELSE
-        SET v_DepartmentFilter = "";
-    END IF;
-
-    -- Build SQL to get department list with total record count
-    SET @sql = CONCAT(
-        'SELECT *, COUNT(*) OVER () AS TotalRecords FROM Department WHERE IsDeleted = 0',
-        v_DepartmentFilter,
-        ' ORDER BY DepartmentName ', p_OrderType,
-        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
-    );
-
-    -- Debug SQL (if needed)
-    -- SELECT @sql;
-
-    -- Execute dynamic SQL
-    PREPARE stmt FROM @sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
+    -- Truy vấn danh sách Department cùng số lượng Division của từng Department
+    SELECT 
+        d.Id AS Department,
+        d.DepartmentName,
+        d.Description,
+        COUNT(dv.Id) AS TotalDivisions,  -- Đếm số lượng Division
+        COUNT(*) OVER () AS TotalRecords
+    FROM Department d
+    LEFT JOIN Division dv ON d.Id = dv.DepartmentId AND dv.IsDeleted = 0  -- Đổi bí danh từ 'div' thành 'dv'
+    WHERE d.IsDeleted = 0
+        AND (p_DepartmentName IS NULL OR p_DepartmentName = '' OR d.DepartmentName LIKE CONCAT('%', p_DepartmentName, '%'))
+    GROUP BY d.Id, d.DepartmentName, d.Description
+    ORDER BY d.DepartmentName 
+    LIMIT p_PageSize OFFSET v_Offset;
 END$$
 
 DELIMITER ;
+
+
 
 DELIMITER ;
 
@@ -653,9 +646,439 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE DeletePersonnel(
+
+-- PROJECT
+
+ 
+
+DELIMITER $$
+
+CREATE PROCEDURE AddProject(
+    IN p_ProjectName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_PartnerId INT,
+    IN p_Description TEXT,
+    IN p_ProjectStartDate DATE,
+    IN p_ProjectEndDate DATE,
+    IN p_ProjectStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE v_NewProjectId INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT -1 AS NewProjectId; -- Nếu lỗi, trả về -1
+    END;
+
+    INSERT INTO Project (ProjectName, DepartmentId, PartnerId, Description, ProjectStartDate, ProjectEndDate, ProjectStatus)
+    VALUES (p_ProjectName, p_DepartmentId, p_PartnerId, p_Description, p_ProjectStartDate, p_ProjectEndDate, p_ProjectStatus);
+    
+    SET v_NewProjectId = LAST_INSERT_ID(); -- Lấy ID vừa thêm
+
+    SELECT v_NewProjectId AS NewId; -- Trả về ID
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
+-- Cập nhật dự án
+CREATE PROCEDURE UpdateProject(
+    IN p_Id INT,
+    IN p_ProjectName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_PartnerId INT,
+    IN p_Description TEXT,
+    IN p_ProjectStartDate DATE,
+    IN p_ProjectEndDate DATE,
+    IN p_ProjectStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+
+    UPDATE Project
+    SET ProjectName = p_ProjectName,
+        DepartmentId = p_DepartmentId,
+        PartnerId = p_PartnerId,
+        Description = p_Description,
+        ProjectStartDate = p_ProjectStartDate,
+        ProjectEndDate = p_ProjectEndDate,
+        ProjectStatus = p_ProjectStatus
+    WHERE Id = p_Id AND IsDeleted = 0;
+
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm dự án
+CREATE PROCEDURE DeleteProject(
     IN p_Id INT
 )
 BEGIN
-    DELETE FROM Personnel WHERE Id = p_Id;
-END;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+
+    UPDATE Project
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách dự án với phân trang & sắp xếp
+CREATE PROCEDURE GetProjectByPageOrder(
+    IN p_PageIndex INT,
+    IN p_PageSize INT,
+    IN p_OrderType VARCHAR(4),
+    IN p_ProjectName VARCHAR(255)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    SELECT 
+        p.Id,
+        p.ProjectName,
+        p.DepartmentId,
+        d.DepartmentName,
+        p.PartnerId,
+        pr.PartnerName,
+        p.Description,
+        p.ProjectStartDate,
+        p.ProjectEndDate,
+        p.ProjectStatus,
+        COUNT(*) OVER () AS TotalRecords
+    FROM Project p
+    LEFT JOIN Department d ON p.DepartmentId = d.Id
+    LEFT JOIN Partner pr ON p.PartnerId = pr.Id
+    WHERE p.IsDeleted = 0
+        AND (p_ProjectName IS NULL OR p_ProjectName = '' OR p.ProjectName LIKE CONCAT('%', p_ProjectName, '%'))
+    ORDER BY 
+        CASE WHEN p_OrderType = 'ASC' THEN p.ProjectName END ASC,
+        CASE WHEN p_OrderType = 'DESC' THEN p.ProjectName END DESC
+    LIMIT p_PageSize OFFSET v_Offset;
+END$$
+
+DELIMITER ;
+ 
+
+-- Document
+DELIMITER $$
+
+-- Thêm mới tài liệu
+CREATE PROCEDURE AddDocument(
+    IN p_DocumentName NVARCHAR(50),
+    IN p_DocumentLink TEXT,
+    IN p_RelatedId INT,
+    IN p_RelatedType NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+
+    INSERT INTO Document (DocumentName, DocumentLink, RelatedId, RelatedType)
+    VALUES (p_DocumentName, p_DocumentLink, p_RelatedId, p_RelatedType);
+
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật tài liệu
+CREATE PROCEDURE UpdateDocument(
+    IN p_Id INT,
+    IN p_DocumentName NVARCHAR(50),
+    IN p_DocumentLink TEXT,
+    IN p_RelatedId INT,
+    IN p_RelatedType NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+
+    UPDATE Document
+    SET DocumentName = p_DocumentName,
+        DocumentLink = p_DocumentLink,
+        RelatedId = p_RelatedId,
+        RelatedType = p_RelatedType
+    WHERE Id = p_Id AND IsDeleted = 0;
+
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm tài liệu
+CREATE PROCEDURE DeleteDocument(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+
+    UPDATE Document
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách tài liệu có phân trang & sắp xếp
+CREATE PROCEDURE GetDocumentByPageOrder(
+    IN p_PageIndex INT,
+    IN p_PageSize INT,
+    IN p_OrderType VARCHAR(4),
+    IN p_DocumentName VARCHAR(255),
+    IN p_RelatedType NVARCHAR(50)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    SELECT 
+        d.Id AS DocumentId,
+        d.DocumentName,
+        d.DocumentLink,
+        d.RelatedId,
+        d.RelatedType,
+        COUNT(*) OVER () AS TotalRecords
+    FROM Document d
+    WHERE d.IsDeleted = 0
+        AND (p_DocumentName IS NULL OR p_DocumentName = '' OR d.DocumentName LIKE CONCAT('%', p_DocumentName, '%'))
+        AND (p_RelatedType IS NULL OR p_RelatedType = '' OR d.RelatedType = p_RelatedType)
+    ORDER BY 
+        CASE WHEN p_OrderType = 'ASC' THEN d.DocumentName END ASC,
+        CASE WHEN p_OrderType = 'DESC' THEN d.DocumentName END DESC
+    LIMIT p_PageSize OFFSET v_Offset;
+END$$
+
+DELIMITER ;
+
+
+-- services:
+DELIMITER $$
+
+-- Thêm Service
+CREATE PROCEDURE AddService(
+    IN p_ServiceName NVARCHAR(100),
+    IN p_Description TEXT,
+    IN p_ServiceStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO `Service` (ServiceName, Description, ServiceStatus) 
+    VALUES (p_ServiceName, p_Description, p_ServiceStatus);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật Service
+CREATE PROCEDURE UpdateService(
+    IN p_Id INT,
+    IN p_ServiceName NVARCHAR(100),
+    IN p_Description TEXT,
+    IN p_ServiceStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE `Service`
+    SET ServiceName = p_ServiceName,
+        Description = p_Description,
+        ServiceStatus = p_ServiceStatus,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm Service
+CREATE PROCEDURE DeleteService(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE `Service`
+    SET IsDeleted = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách Service
+CREATE PROCEDURE GetServicesByPageOrder(
+    IN p_PageIndex INT,         -- Trang hiện tại
+    IN p_PageSize INT,          -- Số dòng trên mỗi trang
+    IN p_OrderType VARCHAR(4),  -- 'ASC' hoặc 'DESC'
+    IN p_ServiceName VARCHAR(255)  -- Tên dịch vụ cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_ServiceFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_ServiceName IS NOT NULL AND p_ServiceName != '' THEN
+        SET v_ServiceFilter = CONCAT(" AND ServiceName LIKE '%", p_ServiceName, "%' ");
+    ELSE
+        SET v_ServiceFilter = "";
+    END IF;
+
+    -- Xây dựng SQL lấy danh sách dịch vụ kèm tổng số bản ghi
+    SET @sql = CONCAT(
+        'SELECT *, COUNT(*) OVER () AS TotalRecords FROM Service WHERE isdeleted=0',
+        v_ServiceFilter,
+        ' ORDER BY ServiceName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
+
+
+-- PRODUCT
+
+DELIMITER $$
+
+-- Thêm Product
+CREATE PROCEDURE AddProduct(
+    IN p_ProductName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_ProductStartDate DATE,
+    IN p_ProductEndDate DATE,
+    IN p_ProductStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE v_NewProductId INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT -1 AS NewProductId; -- Nếu lỗi, trả về -1
+    END;
+
+    INSERT INTO Product (ProductName, DepartmentId, ProductStartDate, ProductEndDate, ProductStatus)
+    VALUES (p_ProductName, p_DepartmentId, p_ProductStartDate, p_ProductEndDate, p_ProductStatus);
+
+    SET v_NewProductId = LAST_INSERT_ID(); -- Lấy ID vừa thêm
+
+    SELECT v_NewProductId AS NewId; -- Trả về ID mới
+END$$
+
+DELIMITER ;
+DELIMITER $$
+
+-- Cập nhật Product
+CREATE PROCEDURE UpdateProduct(
+    IN p_Id INT,
+    IN p_ProductName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_ProductStartDate DATE,
+    IN p_ProductEndDate DATE,
+    IN p_ProductStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Product
+    SET ProductName = p_ProductName,
+        DepartmentId = p_DepartmentId,
+        ProductStartDate = p_ProductStartDate,
+        ProductEndDate = p_ProductEndDate,
+        ProductStatus = p_ProductStatus
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm Product
+CREATE PROCEDURE DeleteProduct(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Product
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách Product có phân trang và sắp xếp
+CREATE PROCEDURE GetProductsByPageOrder(
+    IN p_PageIndex INT,
+    IN p_PageSize INT,
+    IN p_OrderType VARCHAR(4),
+    IN p_ProductName VARCHAR(255)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_ProductFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_ProductName IS NOT NULL AND p_ProductName != '' THEN
+        SET v_ProductFilter = CONCAT(" AND p.ProductName LIKE '%", p_ProductName, "%' ");
+    ELSE
+        SET v_ProductFilter = "";
+    END IF;
+
+    -- Xây dựng SQL lấy danh sách sản phẩm kèm tổng số bản ghi
+    SET @sql = CONCAT(
+        'SELECT p.*, d.DepartmentName, COUNT(*) OVER () AS TotalRecords 
+         FROM Product p 
+         JOIN Department d ON p.DepartmentId = d.Id 
+         WHERE p.IsDeleted=0',
+        v_ProductFilter,
+        ' ORDER BY p.ProductName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Debug câu SQL (nếu cần kiểm tra)
+    -- SELECT @sql;
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT)
+BEGIN 
+    SELECT * FROM document WHERE RelatedId = ID AND IsDeleted = 0;
+END $$
+
+DELIMITER ;
+

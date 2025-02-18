@@ -26,7 +26,8 @@ export const useNotification = () => {
     messageDone = 'Thao tác thành công',
     messageError = 'Thao tác thất bại',
   }: NotificationProps) => {
-    if (result === 0) {
+    debugger;
+    if (result === 0 || result != 1) {
       notification.success({
         ...notificationConfig,
         description: messageDone,
