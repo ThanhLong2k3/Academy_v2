@@ -10,7 +10,9 @@ import {
 import { RULES_FORM } from '@/utils/validator';
 import { documentAPI } from '@/libs/api/document.api';
 import { useNotification } from '../UI_shared/Notification';
-
+import { Space, Popconfirm, Tooltip } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import type { ColumnType } from 'antd/es/table';
 interface ReusableFormProps {
   departments: any[];
   formdata: any;
@@ -34,7 +36,7 @@ export const ProductForm: React.FC<ReusableFormProps> = ({
   const addDocument = () => {
     setDocuments([
       ...documents,
-      { DocumentName: '', DocumentFile: null, DocumentUrl: '' },
+      { DocumentName: '', DocumentFile: null, DocumentLink: '' },
     ]);
   };
 
@@ -109,7 +111,7 @@ export const ProductForm: React.FC<ReusableFormProps> = ({
       <Card title="Tài liệu đính kèm">
         {documents.map((doc, index) => (
           <Row gutter={16} key={index} align="middle">
-            <Col span={8}>
+            <Col span={11}>
               <Form.Item label="Tên tài liệu" required>
                 <Input
                   value={doc.DocumentName}
@@ -119,7 +121,7 @@ export const ProductForm: React.FC<ReusableFormProps> = ({
                 />
               </Form.Item>
             </Col>
-            <Col span={10}>
+            <Col span={11}>
               <Form.Item label="Tải file lên" required>
                 <Upload
                   beforeUpload={(file) => {
@@ -131,26 +133,35 @@ export const ProductForm: React.FC<ReusableFormProps> = ({
                   <Button icon={<UploadOutlined />}>Chọn file</Button>
                 </Upload>
                 {doc.DocumentFile && <p>{doc.DocumentFile.name}</p>}
-                {doc.DocumentUrl && (
+                {doc.DocumentLink && (
                   <p>
                     <a
-                      href={doc.DocumentUrl}
+                      href={doc.DocumentLink}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Xem file
+                      {doc.DocumentLink.replace('/uploads/', '')}
                     </a>
                   </p>
                 )}
               </Form.Item>
             </Col>
-            <Col span={4}>
-              <Button
-                danger
-                type="link"
-                onClick={() => removeDocument(index, doc.Id)}
-                icon={<MinusCircleOutlined />}
-              />
+            <Col span={2}>
+              <Popconfirm
+                title="Bạn có chắc chắn muốn xóa?"
+                onConfirm={() => removeDocument(index, doc.Id)}
+                okText="Có"
+                cancelText="Không"
+              >
+                <Tooltip title="Xóa">
+                  <Button
+                    shape="circle"
+                    icon={<DeleteOutlined />}
+                    style={{ backgroundColor: 'red', color: 'white' }}
+                    className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                  />
+                </Tooltip>
+              </Popconfirm>
             </Col>
           </Row>
         ))}
