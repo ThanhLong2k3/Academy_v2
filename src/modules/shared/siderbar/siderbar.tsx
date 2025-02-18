@@ -29,7 +29,7 @@ const routeMap: { [key: string]: string } = {
   '7': '/Topics',
   '8': '/Training',
   '2': '/vi/partner',
-  '3': '/Customers',
+  '3': '/vi/customer',
   '5': '/Products',
   '9': '/Intellectual-Property',
   '11': '/vi/department',
@@ -153,7 +153,7 @@ const SideBar = () => {
       <div
         className="flex items-center justify-center h-16 px-4"
         style={{
-          backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+          backgroundColor: '#ffffff',
           color: textColor,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',

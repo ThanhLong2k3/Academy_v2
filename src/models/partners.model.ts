@@ -4,9 +4,10 @@ export interface Partner_DTO {
   PhoneNumber: string;
   Email: string;
   Address: string;
-  StartDate: Date;
-  EndDate: Date | null;
+  StartDate: string;
+  EndDate: string | null;
   PartnershipStatus: string;
+  TotalRecords: number;
 }
 
 export interface AddPartner_DTO {

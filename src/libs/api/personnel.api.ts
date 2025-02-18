@@ -13,8 +13,8 @@ export const PersonnelAPI = {
     return data;
   },
 
-  createPersonnel: async (newPersonnel: Personnel_DTO) => {
-    const data = await CallApi.create<number>('personnel', newPersonnel);
+  createPersonnel: async (personnel: Personnel_DTO) => {
+    const data = await CallApi.create<number>('personnel', personnel);
     return data;
   },
 

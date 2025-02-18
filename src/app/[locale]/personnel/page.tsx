@@ -52,7 +52,6 @@ const PersonnelPage = () => {
     orderType: 'ASC' | 'DESC',
   ) => {
     try {
-      debugger;
       setLoading(true);
       const data = await PersonnelAPI.getPersonnelsByPageOrder(
         pageIndex,
@@ -65,7 +64,7 @@ const PersonnelPage = () => {
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách chức vụ',
+        messageError: 'Lỗi tải danh sách nhân viên',
       });
     } finally {
       setLoading(false);
@@ -111,14 +110,14 @@ const PersonnelPage = () => {
       const data: any = await PersonnelAPI.deletePersonnel(record.Id);
       show({
         result: data.result,
-        messageDone: 'Xóa chức vụ thành công',
-        messageError: 'Xóa chức vụ thất bại',
+        messageDone: 'Xóa nhân viên thành công',
+        messageError: 'Xóa nhân viên thất bại',
       });
       GetPersonnelsByPageOrder(currentPage, pageSize, orderType);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi xóa chức vụ',
+        messageError: 'Lỗi xóa nhân viên',
       });
     }
   };
@@ -128,26 +127,26 @@ const PersonnelPage = () => {
       const values = await form.validateFields();
       setLoading(true);
       let result: any;
-
       if (editingPersonnel) {
-        result = await PersonnelAPI.updatePersonnel(values);
+        result = await PersonnelAPI.updatePersonnel(values); // Sử dụng FormData
         show({
           result: result.result,
-          messageDone: 'Cập nhật chức vụ thành công',
-          messageError: 'Cập nhật chức vụ thất bại',
+          messageDone: 'Cập nhật nhân viên thành công',
+          messageError: 'Cập nhật nhân viên thất bại',
         });
       } else {
         result = await PersonnelAPI.createPersonnel(values);
         show({
           result: result.result,
-          messageDone: 'Thêm chức vụ thành công',
-          messageError: 'Thêm chức vụ thất bại',
+          messageDone: 'Thêm nhân viên thành công',
+          messageError: 'Thêm nhân viên thất bại',
         });
       }
 
       await GetPersonnelsByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {
+      console.error('❌ Lỗi khi lưu nhân viên:', error);
       show({
         result: 1,
         messageError: 'Lỗi lưu chức vụ',
