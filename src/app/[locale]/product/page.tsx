@@ -11,7 +11,11 @@ import { ProductForm } from '@/components/product/product_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 import { showDateFormat } from '@/utils/date';
+import { uploadFile } from '@/libs/api/upload.api';
 import { Add_Document_DTO } from '@/models/document.model';
+import { documentAPI } from '@/libs/api/document.api';
+import { Department_DTO } from '@/models/department.model';
+import { DepartmentAPI } from '@/libs/api/department.api';
 const ProductPage = () => {
   const [Products, setProducts] = useState<Get_Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,23 +32,17 @@ const ProductPage = () => {
   const [total, setTotal] = useState<number>(10);
   const { show } = useNotification();
   const [documents, setDocuments] = useState<any[]>([]);
-  const [adddata, setAdddata] = useState<number | null>(null);
-  const [documentUp, setDoccumentUp] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<Department_DTO[]>([]);
+  const [documentAfter, setdocumentAfter] = useState<any[]>([]);
+
   useEffect(() => {
     Get_ProductsByPageOrder(currentPage, pageSize, orderType, searchText);
+    Get_Departments();
   }, [currentPage, pageSize, orderType, searchText]);
 
-  useEffect(() => {
-    console.log('documentUp after update:', documentUp);
-  }, [documentUp]);
-
-  const handleUpdateDocuments = (updatedDocs: any) => {
-    if (!updatedDocs || updatedDocs.length === 0) {
-      console.warn('updatedDocs is empty or undefined');
-      return;
-    }
-    console.log('updatedDocs before setting state:', updatedDocs);
-    setDoccumentUp(updatedDocs);
+  const Get_Departments = async () => {
+    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
+    setDepartments(data);
   };
 
   const Get_ProductsByPageOrder = async (
@@ -89,7 +87,18 @@ const ProductPage = () => {
     setModalVisible(true);
   };
 
-  const openEditModal = (record: Get_Product) => {
+  const openEditModal = async (record: Get_Product) => {
+    const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+      record.Id,
+    );
+
+    if (dataDocuments) {
+      setDocuments(dataDocuments);
+      setdocumentAfter(dataDocuments);
+    } else {
+      setDocuments([]);
+    }
+
     setEditingProduct(record);
     setIsEditing(true);
     const formattedValues = {
@@ -97,12 +106,13 @@ const ProductPage = () => {
       ProductStartDate: showDateFormat(record.ProductStartDate),
       ProductEndDate: showDateFormat(record.ProductEndDate),
     };
+
     form.setFieldsValue(formattedValues);
     setModalVisible(true);
   };
 
   const closeModal = () => {
-    setAdddata(null);
+    setDocuments([]);
     setModalVisible(false);
     setEditingProduct(null);
     setIsEditing(false);
@@ -114,8 +124,8 @@ const ProductPage = () => {
       const data: any = await productAPI.deleteproduct(record.Id);
       show({
         result: data.result,
-        messageDone: 'Xóa sản phẩm thành công',
-        messageError: 'Xóa sản phẩm thất bại',
+        messageDone: 'Cập nhập sản phẩm thành công',
+        messageError: 'Cập sản phẩm thất bại',
       });
       Get_ProductsByPageOrder(currentPage, pageSize, orderType);
     } catch (error) {
@@ -136,12 +146,6 @@ const ProductPage = () => {
     }
 
     const result: any = await productAPI.createproduct(newProduct);
-
-    show({
-      result: result.result,
-      messageDone: 'Xóa sản phẩm thành công',
-      messageError: 'Xóa sản phẩm thất bại',
-    });
     return result.result;
   };
 
@@ -160,44 +164,64 @@ const ProductPage = () => {
       const values = await form.validateFields();
       setLoading(true);
 
-      setAdddata(values);
-      // if(editingProduct)
-      // {
-      //   await updateproduct(editingProduct.Id,values);
-      // }
-      // else{
-      //   const newIDProduct:any =await addProduct(values);
-      //   if(newIDProduct)
-      //   {
-      //     const newDocuments:Add_Document_DTO={
-      //       DocumentName:documentUp.DocumentName,
-      //       DocumentLink:documentUp.DocumentLink,
-      //       RelatedId:newIDProduct,
-      //       RelatedType:"Product"
-      //     }
-      //   }
-      //   show({
-      //     result: newIDProduct.result,
-      //     messageDone:"Thêm sản phẩm thành công!",
-      //     messageError: "Thêm sản phẩm thất bại",
-      //   })
+      let uploadedDocuments: any = [];
+      if (documents.length > 0) {
+        const result = await uploadFile(documents);
+        uploadedDocuments = result.documents || [];
+      }
 
-      // }
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      if (editingProduct) {
+        await updateproduct(editingProduct.Id, values);
+        const updatedDocuments = uploadedDocuments.filter((doc: any) => {
+          if (doc.Id) {
+            // Tìm tài liệu cũ có cùng ID
+            const oldDoc = documentAfter.find((old) => old.Id === doc.Id);
 
-      console.log('data product', values);
+            // Nếu tìm thấy tài liệu cũ và có thay đổi về DocumentName hoặc DocumentLink
+            return (
+              oldDoc &&
+              (oldDoc.DocumentName !== doc.DocumentName ||
+                oldDoc.DocumentLink !== doc.DocumentLink)
+            );
+          }
+          return false;
+        });
+
+        const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
+
+        // Log kết quả
+        console.log('Tài liệu cần cập nhật:', updatedDocuments);
+        console.log('Tài liệu cần thêm mới:', newDocuments);
+      } else {
+        const newIDProduct: any = await addProduct(values);
+
+        if (uploadedDocuments.length > 0) {
+          for (const doc of uploadedDocuments) {
+            await documentAPI.createdocument({
+              DocumentName: doc.DocumentName,
+              DocumentLink: doc.DocumentUrl,
+              RelatedId: newIDProduct,
+              RelatedType: 'Product',
+            });
+          }
+        }
+
+        show({
+          result: newIDProduct,
+          messageDone: 'Thêm sản phẩm thành công!',
+          messageError: 'Thêm sản phẩm thất bại',
+        });
+      }
 
       await Get_ProductsByPageOrder(currentPage, pageSize, orderType);
-      console.log('document Up:', documentUp);
       closeModal();
-      message.success(
-        editingProduct
-          ? 'Cập nhật sản phẩm thành công'
-          : 'Thêm sản phẩm thành công',
-      );
     } catch (error) {
       console.error('Save error:', error);
-      message.error('Lỗi lưu sản phẩm');
+      show({
+        result: 1,
+        messageDone: 'Thêm sản phẩm thành công!',
+        messageError: 'Thêm sản phẩm thất bại',
+      });
     } finally {
       setLoading(false);
     }
@@ -271,13 +295,10 @@ const ProductPage = () => {
         confirmLoading={loading}
       >
         <ProductForm
-          formdulieu={form}
+          formdata={form}
           documents={documents}
           setDocuments={setDocuments}
-          adddataa={adddata}
-          onDocumentsUpdated={(updatedDocs) =>
-            handleUpdateDocuments(updatedDocs)
-          }
+          departments={departments}
         />
       </Modal>
     </Card>
