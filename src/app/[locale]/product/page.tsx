@@ -93,6 +93,7 @@ const ProductPage = () => {
     );
 
     if (dataDocuments) {
+      console.log('data lấy ra riêng', dataDocuments);
       setDocuments(dataDocuments);
       setdocumentAfter(dataDocuments);
     } else {
@@ -159,6 +160,18 @@ const ProductPage = () => {
       throw new Error('Failed to update product');
     }
   };
+  const addDocuments = async (ID_Product: number, uploadedDocuments: any) => {
+    if (uploadedDocuments.length > 0) {
+      for (const doc of uploadedDocuments) {
+        await documentAPI.createdocument({
+          DocumentName: doc.DocumentName,
+          DocumentLink: doc.DocumentUrl,
+          RelatedId: ID_Product,
+          RelatedType: 'Product',
+        });
+      }
+    }
+  };
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
@@ -172,39 +185,20 @@ const ProductPage = () => {
 
       if (editingProduct) {
         await updateproduct(editingProduct.Id, values);
-        const updatedDocuments = uploadedDocuments.filter((doc: any) => {
-          if (doc.Id) {
-            // Tìm tài liệu cũ có cùng ID
-            const oldDoc = documentAfter.find((old) => old.Id === doc.Id);
+        debugger;
 
-            // Nếu tìm thấy tài liệu cũ và có thay đổi về DocumentName hoặc DocumentLink
-            return (
-              oldDoc &&
-              (oldDoc.DocumentName !== doc.DocumentName ||
-                oldDoc.DocumentLink !== doc.DocumentLink)
-            );
-          }
-          return false;
-        });
+        console.log('document data mới:', uploadedDocuments);
+        console.log('data document', documents);
+        console.log('document data cũ', documentAfter);
 
         const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
+        await addDocuments(editingProduct.Id, newDocuments);
 
-        // Log kết quả
-        console.log('Tài liệu cần cập nhật:', updatedDocuments);
         console.log('Tài liệu cần thêm mới:', newDocuments);
       } else {
         const newIDProduct: any = await addProduct(values);
 
-        if (uploadedDocuments.length > 0) {
-          for (const doc of uploadedDocuments) {
-            await documentAPI.createdocument({
-              DocumentName: doc.DocumentName,
-              DocumentLink: doc.DocumentUrl,
-              RelatedId: newIDProduct,
-              RelatedType: 'Product',
-            });
-          }
-        }
+        await addDocuments(newIDProduct, uploadedDocuments);
 
         show({
           result: newIDProduct,
