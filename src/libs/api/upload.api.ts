@@ -2,7 +2,7 @@ import { message } from 'antd';
 
 interface Document {
   DocumentFile?: File;
-  DocumentUrl?: string;
+  DocumentLink?: string;
   [key: string]: any;
 }
 
@@ -30,7 +30,7 @@ export const uploadFile = async (
 
   // Count files that need uploading
   documents.forEach((doc) => {
-    if (doc.DocumentFile && !doc.DocumentUrl) {
+    if (doc.DocumentFile && !doc.DocumentLink) {
       filesCount++;
     }
   });
@@ -45,7 +45,7 @@ export const uploadFile = async (
 
   // Append files to FormData
   documents.forEach((doc, index) => {
-    if (doc.DocumentFile && !doc.DocumentUrl) {
+    if (doc.DocumentFile && !doc.DocumentLink) {
       formData.append(`file_${index}`, doc.DocumentFile);
       hasFiles = true;
     }
@@ -74,10 +74,10 @@ export const uploadFile = async (
 
       // Update documents with new URLs
       updatedDocuments.forEach((doc, index) => {
-        if (doc.DocumentFile && !doc.DocumentUrl) {
+        if (doc.DocumentFile && !doc.DocumentLink) {
           updatedDocuments[index] = {
             ...doc,
-            DocumentUrl: result.uploadedPaths[uploadedIndex],
+            DocumentLink: result.uploadedPaths[uploadedIndex],
           };
           uploadedIndex++;
         }
