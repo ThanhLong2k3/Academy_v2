@@ -4,43 +4,21 @@ import { Add_Document_DTO, Up_Document_DTO } from '@/models/document.model';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const pageIndex = Number(searchParams.get('pageIndex')) || 1;
-  const pageSize = Number(searchParams.get('pageSize')) || 10;
-  const orderType = (searchParams.get('orderType') as 'ASC' | 'DESC') || 'ASC';
-  const divisionName = searchParams.get('divisionName') || undefined;
-  const departmentName = searchParams.get('departmentName') || undefined;
+  const RelatedId = Number(searchParams.get('relatedId'));
 
-  return getDivisionByPageOrder(
-    pageIndex,
-    pageSize,
-    orderType,
-    divisionName,
-    departmentName,
-  );
+  return getDocuments_by_IdRelated(RelatedId);
 }
 
-export async function getDivisionByPageOrder(
-  pageIndex: number,
-  pageSize: number,
-  orderType: 'ASC' | 'DESC',
-  divisionName?: string,
-  departmentName?: string,
-) {
+export async function getDocuments_by_IdRelated(relatedId: number) {
   try {
     const result = await db_Provider<Up_Document_DTO[]>(
-      'CALL GetDivisionByPageOrder(?, ?, ?, ?, ?)',
-      [
-        pageIndex,
-        pageSize,
-        orderType,
-        divisionName || null,
-        departmentName || null,
-      ],
+      'CALL GetDocuments_by_IdRelated(?)',
+      [relatedId],
     );
     return result;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách bộ phận:', error);
-    throw new Error('Không thể lấy danh sách bộ phận.');
+    console.error('Lỗi khi lấy danh sách tài liệu:', error);
+    throw new Error('Không thể lấy danh sách tài liệu.');
   }
 }
 

@@ -169,7 +169,7 @@ const SideBar = () => {
         }}
       >
         <Image
-          src="/image/logo.png"
+          src="/image/logotrang.png"
           alt="Logo"
           width={150}
           height={60}

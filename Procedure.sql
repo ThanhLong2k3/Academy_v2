@@ -167,7 +167,7 @@ BEGIN
 
     -- Truy vấn danh sách Department cùng số lượng Division của từng Department
     SELECT 
-        d.Id AS DepartmentId,
+        d.Id AS Department,
         d.DepartmentName,
         d.Description,
         COUNT(dv.Id) AS TotalDivisions,  -- Đếm số lượng Division
@@ -854,6 +854,7 @@ DELIMITER ;
 
 
 -- PRODUCT
+
 DELIMITER $$
 
 -- Thêm Product
@@ -865,16 +866,23 @@ CREATE PROCEDURE AddProduct(
     IN p_ProductStatus NVARCHAR(50)
 )
 BEGIN
+    DECLARE v_NewProductId INT;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION 
     BEGIN
-        SELECT 1 AS RESULT;
+        SELECT -1 AS NewProductId; -- Nếu lỗi, trả về -1
     END;
-    
+
     INSERT INTO Product (ProductName, DepartmentId, ProductStartDate, ProductEndDate, ProductStatus)
     VALUES (p_ProductName, p_DepartmentId, p_ProductStartDate, p_ProductEndDate, p_ProductStatus);
-    
-    SELECT 0 AS RESULT;
+
+    SET v_NewProductId = LAST_INSERT_ID(); -- Lấy ID vừa thêm
+
+    SELECT v_NewProductId AS NewId; -- Trả về ID mới
 END$$
+
+DELIMITER ;
+DELIMITER $$
 
 -- Cập nhật Product
 CREATE PROCEDURE UpdateProduct(
@@ -957,6 +965,15 @@ BEGIN
     EXECUTE stmt;
     DEALLOCATE PREPARE stmt;
 END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT)
+BEGIN 
+    SELECT * FROM document WHERE RelatedId = ID AND IsDeleted = 0;
+END $$
 
 DELIMITER ;
 

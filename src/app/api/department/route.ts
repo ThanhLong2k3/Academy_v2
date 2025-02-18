@@ -1,6 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { db_Provider } from '@/app/api/Api_Provider';
-import type { GetDepartment, AddDepartment } from '@/models/department.model';
+import type {
+  GetDepartment,
+  AddDepartment,
+  Department_DTO,
+} from '@/models/department.model';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -24,7 +28,7 @@ export async function GetDepartmentByPageOrder(
   departmentName?: string,
 ) {
   try {
-    const result = await db_Provider<GetDepartment[]>(
+    const result = await db_Provider<Department_DTO[]>(
       'CALL GetDepartmentByPageOrder(?, ?, ?, ?)',
       [pageIndex, pageSize, orderType, departmentName || null],
     );

@@ -8,21 +8,10 @@ export const documentAPI = {
       await CallApi.getAll<Up_Document_DTO>('document');
     return data;
   },
-  getdocumentsByPageOrder: async (
-    pageIndex: number,
-    pageSize: number,
-    orderType: 'ASC' | 'DESC',
-    documentName?: string,
-  ) => {
+  GetDocuments_by_IdRelated: async (relatedId: number) => {
     const queryParams = new URLSearchParams({
-      pageIndex: pageIndex.toString(),
-      pageSize: pageSize.toString(),
-      orderType,
+      relatedId: relatedId.toString(),
     });
-
-    if (documentName) {
-      queryParams.append('documentName', documentName);
-    }
 
     const data: Up_Document_DTO[] = await CallApi.getAll<Up_Document_DTO>(
       `document?${queryParams.toString()}`,
