@@ -10,10 +10,22 @@ export const PositionAPI = {
     pageIndex: number,
     pageSize: number,
     orderType: 'ASC' | 'DESC',
+    positionName?: string,
   ) => {
+    const queryParams = new URLSearchParams({
+      pageIndex: pageIndex.toString(),
+      pageSize: pageSize.toString(),
+      orderType,
+    });
+
+    if (positionName) {
+      queryParams.append('positionName', positionName);
+    }
+
     const data: GetPosition[] = await CallApi.getAll<GetPosition>(
-      `position?pageIndex=${pageIndex}&pageSize=${pageSize}&orderType=${orderType}`,
+      `position?${queryParams.toString()}`,
     );
+
     return data;
   },
 

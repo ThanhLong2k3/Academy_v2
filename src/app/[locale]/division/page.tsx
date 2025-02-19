@@ -22,37 +22,56 @@ const DivisionPage = () => {
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
   const { show } = useNotification();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [orderType, setOrderType] = useState<'ASC' | 'DESC'>('ASC');
+  const [total, setTotal] = useState<number>(10);
 
   useEffect(() => {
-    GetAllDivision();
-  }, []);
+    GetPositionsByPageOrder(currentPage, pageSize, orderType, searchText);
+  }, [currentPage, pageSize, orderType]);
 
-  const GetAllDivision = async () => {
+  const GetPositionsByPageOrder = async (
+    pageIndex: number,
+    pageSize: number,
+    orderType: 'ASC' | 'DESC',
+    divisionName?: string,
+    departmentName?: string,
+  ) => {
     try {
       setLoading(true);
-      const data = await divisionAPI.getAlldivision();
+      const data = await divisionAPI.getDivisionByPageOrder(
+        pageIndex,
+        pageSize,
+        orderType,
+        divisionName,
+        departmentName,
+      );
+      setTotal(data[0].TotalRecords);
       setDivisions(data);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách bộ phận',
+        messageError: 'Lỗi tải danh sách chức vụ',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setSearchText('');
-    GetAllDivision();
+    await GetPositionsByPageOrder(currentPage, pageSize, orderType);
   };
 
-  const handleSearch = (value: string) => {
-    setSearchText(value);
-    const filteredData = Divisions.filter((Division) =>
-      Division.DivisionName?.toLowerCase().includes(value.toLowerCase()),
+  const handleSearch = async (value: string) => {
+    await GetPositionsByPageOrder(
+      currentPage,
+      pageSize,
+      orderType,
+      searchText,
+      value,
     );
-    setDivisions(filteredData);
   };
 
   // Modal Functions
@@ -85,7 +104,12 @@ const DivisionPage = () => {
         messageDone: 'Xóa bộ phận thành công',
         messageError: 'Xóa bộ phận thất bại',
       });
-      GetAllDivision();
+      await GetPositionsByPageOrder(
+        currentPage,
+        pageSize,
+        orderType,
+        searchText,
+      );
     } catch (error) {
       show({
         result: 1,
@@ -121,8 +145,13 @@ const DivisionPage = () => {
           messageError: 'Thêm bộ phận thất bại',
         });
       }
+      await GetPositionsByPageOrder(
+        currentPage,
+        pageSize,
+        orderType,
+        searchText,
+      );
 
-      await GetAllDivision();
       closeModal();
     } catch (error) {
       show({
@@ -159,8 +188,7 @@ const DivisionPage = () => {
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
+            onSearch={handleSearch}
             style={{ width: 300 }}
           />
           <Button
@@ -183,11 +211,15 @@ const DivisionPage = () => {
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
-            total: Divisions.length,
-            pageSize: 10,
+            total: total,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
           }}
         />
       </div>

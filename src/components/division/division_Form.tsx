@@ -9,14 +9,15 @@ interface ReusableFormProps {
 }
 
 export const DivisiontForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
-  const [departments, setDepartments] = useState<GetDepartment[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDepartments();
   }, []);
 
   const fetchDepartments = async () => {
-    const data = await DepartmentAPI.getAllDepartment();
+    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
+    console.log(data);
     setDepartments(data);
   };
 
@@ -29,13 +30,12 @@ export const DivisiontForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
             label="Chọn đơn vị"
             rules={RULES_FORM.required}
           >
-            <Select>
-              {departments.map((department) => (
-                <Select.Option key={department.Id} value={department.Id}>
-                  {department.DepartmentName}
-                </Select.Option>
-              ))}
-            </Select>
+            <Select
+              options={departments.map((department) => ({
+                label: department.DepartmentName,
+                value: department.DepartmentId,
+              }))}
+            />
           </Form.Item>
         </Col>
         <Col span={12}>

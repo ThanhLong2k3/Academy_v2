@@ -1,9 +1,35 @@
 import { CallApi } from '@/libs/call_API';
-import { GetDepartment, AddDepartment } from '@/models/department.model';
+import {
+  GetDepartment,
+  AddDepartment,
+  Department_DTO,
+} from '@/models/department.model';
 export const DepartmentAPI = {
   getAllDepartment: async () => {
     const data: GetDepartment[] =
       await CallApi.getAll<GetDepartment>('department');
+    return data;
+  },
+  getDepartmentByPageOrder: async (
+    pageIndex: number,
+    pageSize: number,
+    orderType: 'ASC' | 'DESC',
+    positionName?: string,
+  ) => {
+    const queryParams = new URLSearchParams({
+      pageIndex: pageIndex.toString(),
+      pageSize: pageSize.toString(),
+      orderType,
+    });
+
+    if (positionName) {
+      queryParams.append('departmentName', positionName);
+    }
+
+    const data: Department_DTO[] = await CallApi.getAll<Department_DTO>(
+      `department?${queryParams.toString()}`,
+    );
+
     return data;
   },
 
@@ -12,7 +38,7 @@ export const DepartmentAPI = {
     return data;
   },
 
-  updateDepartment: async (Department: GetDepartment) => {
+  updateDepartment: async (Department: AddDepartment) => {
     const data = await CallApi.update<number>('department', Department);
     return data;
   },

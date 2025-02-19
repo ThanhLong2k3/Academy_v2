@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
 
   return getPersonnelsByPageOrder(pageIndex, pageSize, orderType);
 }
-
 export async function getPersonnelsByPageOrder(
   pageIndex: number,
   pageSize: number,
@@ -22,7 +21,6 @@ export async function getPersonnelsByPageOrder(
     const result = await db_Provider<GetPersonnel_DTO[]>(
       `CALL GetPersonnelByPageOrder(${pageIndex}, ${pageSize}, '${orderType}')`,
     );
-
     return result;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách chức vụ:', error);
@@ -32,20 +30,28 @@ export async function getPersonnelsByPageOrder(
 
 export async function POST(request: NextRequest) {
   try {
-    const body: Division_DTO = await request.json();
+    const body: Personnel_DTO = await request.json();
 
-    await executeQuery('CALL AddDivision(?,?,?, @p_Result)', [
-      body.DivisionName,
-      body.DepartmentId,
-      body.Description,
-    ]);
-
-    const result: any = await executeQuery('SELECT @p_Result AS Result');
-
-    return NextResponse.json({ result: result[0].Result }, { status: 200 });
+    return db_Provider<any>(
+      'CALL AddPersonnel(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        body.DivisionId,
+        body.PersonnelName,
+        body.PositionId,
+        body.DateOfBirth,
+        body.Picture,
+        body.Email,
+        body.Description,
+        body.PhoneNumber,
+        body.JoinDate || null,
+        body.EndDate || null,
+        body.WorkStatus,
+      ],
+    );
   } catch (error) {
+    console.error('Lỗi khi thêm sản phẩm:', error);
     return NextResponse.json(
-      { result: 1, error: 'Internal Server Error' },
+      { error: 'Không thể thêm sản phẩm.' },
       { status: 500 },
     );
   }
@@ -54,13 +60,13 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body: Division_DTO = await request.json();
-    await executeQuery('CALL UpdateDivision(?,?,?,?,@p_Result)', [
+    await executeQuery('CALL UpdatePersonnel(?,?,?,?,@p_Result)', [
       body.Id,
       body.DivisionName,
       body.DepartmentId,
       body.Description,
     ]);
-    console.log(body);
+
     const result: any = await executeQuery('SELECT @p_Result AS Result');
 
     return NextResponse.json({ result: result[0].Result }, { status: 200 });

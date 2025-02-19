@@ -52,9 +52,11 @@ const ThemeChanger = () => {
       }}
     >
       <button
-        onClick={() => setThemeColor({ token: { colorPrimary: '#ff4d4f' } })}
+        onClick={() =>
+          setThemeColor({ token: { colorPrimary: 'rgb(13,68,138)' } })
+        }
         style={{
-          backgroundColor: '#ff4d4f',
+          backgroundColor: 'rgb(13,68,138)',
           borderRadius: '50%',
           height: '15px',
           width: '15px',

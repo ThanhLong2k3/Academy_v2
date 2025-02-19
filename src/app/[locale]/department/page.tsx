@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { GetDepartment } from '@/models/department.model';
+import { AddDepartment, GetDepartment } from '@/models/department.model';
 import { DepartmentAPI } from '@/libs/api/department.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
 import { DepartmentForm } from '@/components/Department/department_Form';
@@ -21,20 +21,35 @@ const DepartmentPage = () => {
   const [searchText, setSearchText] = useState('');
   const [form] = Form.useForm();
   const { show } = useNotification();
+  const [total, setTotal] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [orderType, setOrderType] = useState<'ASC' | 'DESC'>('ASC');
 
   useEffect(() => {
-    GetAllDepartment();
-  }, []);
+    GetDepartmentsByPageOrder(currentPage, pageSize, orderType, searchText);
+  }, [currentPage, pageSize, orderType]);
 
-  const GetAllDepartment = async () => {
+  const GetDepartmentsByPageOrder = async (
+    pageIndex: number,
+    pageSize: number,
+    orderType: 'ASC' | 'DESC',
+    departmentName?: string,
+  ) => {
     try {
       setLoading(true);
-      const data = await DepartmentAPI.getAllDepartment();
+      const data = await DepartmentAPI.getDepartmentByPageOrder(
+        pageIndex,
+        pageSize,
+        orderType,
+        departmentName,
+      );
+      setTotal(data[0].TotalRecords);
       setDepartments(data);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách đơn vị',
+        messageError: 'Lỗi tải danh sách phòng ban',
       });
     } finally {
       setLoading(false);
@@ -43,15 +58,11 @@ const DepartmentPage = () => {
 
   const handleRefresh = () => {
     setSearchText('');
-    GetAllDepartment();
+    GetDepartmentsByPageOrder(1, pageSize, orderType);
   };
 
   const handleSearch = (value: string) => {
-    setSearchText(value);
-    const filteredData = Departments.filter((Department) =>
-      Department.DepartmentName?.toLowerCase().includes(value.toLowerCase()),
-    );
-    setDepartments(filteredData);
+    GetDepartmentsByPageOrder(1, pageSize, orderType, value);
   };
 
   // Modal Functions
@@ -84,7 +95,7 @@ const DepartmentPage = () => {
         messageDone: 'Xóa đơn vị thành công',
         messageError: 'Xóa đơn vị thất bại',
       });
-      GetAllDepartment();
+      GetDepartmentsByPageOrder(currentPage, pageSize, orderType);
     } catch (error) {
       show({
         result: 1,
@@ -92,40 +103,41 @@ const DepartmentPage = () => {
       });
     }
   };
+  const addDepartment = async (NewDepartment: AddDepartment) => {
+    const result: any = await DepartmentAPI.createDepartment(NewDepartment);
+    show({
+      result: result.result,
+      messageDone: 'Thêm đơn vị thành công',
+      messageError: 'Thêm đơn vị thất bại',
+    });
+  };
 
+  const updateDepartment = async (Id: number, Department: AddDepartment) => {
+    const Newvalue = {
+      Id: Id,
+      ...Department,
+    };
+    const result: any = await DepartmentAPI.updateDepartment(Newvalue);
+    show({
+      result: result.result,
+      messageDone: 'Cập nhật đơn vị thành công',
+      messageError: 'Cập nhật đơn vị thất bại',
+    });
+  };
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      let result: any;
+      editingDepartment
+        ? await updateDepartment(editingDepartment.Id, values)
+        : await addDepartment(values);
 
-      if (editingDepartment) {
-        const value = {
-          Id: editingDepartment.Id,
-          DepartmentName: values.DepartmentName,
-          Description: values.Description,
-        };
-        result = await DepartmentAPI.updateDepartment(value);
-        show({
-          result: result.result,
-          messageDone: 'Cập nhật đơn vị thành công',
-          messageError: 'Cập nhật đơn vị thất bại',
-        });
-      } else {
-        result = await DepartmentAPI.createDepartment(values);
-        show({
-          result: result.result,
-          messageDone: 'Thêm đơn vị thành công',
-          messageError: 'Thêm đơn vị thất bại',
-        });
-      }
-
-      await GetAllDepartment();
+      await GetDepartmentsByPageOrder(1, pageSize, orderType);
       closeModal();
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi lưu đơn vị',
+        messageError: 'Lỗi lưu phòng ban',
       });
     } finally {
       setLoading(false);
@@ -157,8 +169,7 @@ const DepartmentPage = () => {
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
+            onSearch={handleSearch}
             style={{ width: 300 }}
           />
           <Button
@@ -181,11 +192,15 @@ const DepartmentPage = () => {
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
-            total: Departments.length,
-            pageSize: 10,
+            total: total,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
           }}
         />
       </div>
