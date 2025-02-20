@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type {
@@ -15,6 +15,12 @@ import ProjectForm from '@/components/project/project_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 import { showDateFormat } from '@/utils/date';
+import { Partner_DTO } from '@/models/partners.model';
+import { Department_DTO, GetDepartment } from '@/models/department.model';
+import { DepartmentAPI } from '@/libs/api/department.api';
+import { PartnerAPI } from '@/libs/api/partner.api';
+import { uploadFile } from '@/libs/api/upload.api';
+import { documentAPI } from '@/libs/api/document.api';
 const ProjectPage = () => {
   const [Projects, setProjects] = useState<Get_project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,9 +35,14 @@ const ProjectPage = () => {
   const [total, setTotal] = useState<number>(10);
   const { show } = useNotification();
   const [documents, setDocuments] = useState<any[]>([]);
-  const [newID, setNewID] = useState<number>(0);
+  const [partners, setPartners] = useState<Partner_DTO[]>([]);
+  const [departments, setDepartments] = useState<Department_DTO[]>([]);
+  const [documentAfter, setDocumentAfter] = useState<any[]>([]);
+
   useEffect(() => {
     ProjectsByPageOrder(currentPage, pageSize, orderType, searchText);
+    getDepartment();
+    getPartner();
   }, [currentPage, pageSize, orderType, searchText]);
 
   const ProjectsByPageOrder = async (
@@ -60,6 +71,15 @@ const ProjectPage = () => {
     }
   };
 
+  const getDepartment = async () => {
+    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
+    setDepartments(data);
+  };
+
+  const getPartner = async () => {
+    const data = await PartnerAPI.getPartnersByPageOrder(1, 100, 'ASC');
+    setPartners(data);
+  };
   const handleRefresh = () => {
     setSearchText('');
     ProjectsByPageOrder(1, pageSize, orderType);
@@ -76,17 +96,26 @@ const ProjectPage = () => {
     setModalVisible(true);
   };
 
-  const openEditModal = (record: Get_project) => {
-    setEditingProject(record);
-    setIsEditing(true);
-    const formattedValues = {
-      ...record,
-      ProjectStartDate: showDateFormat(record.ProjectStartDate),
-      ProjectEndDate: showDateFormat(record.ProjectEndDate),
-    };
-    form.setFieldsValue(formattedValues);
-    setModalVisible(true);
-  };
+  const openEditModal = useCallback(
+    async (record: Get_project) => {
+      const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+        record.Id,
+        'Project',
+      );
+      setDocumentAfter(dataDocuments || []);
+      setDocuments(dataDocuments || []);
+      setEditingProject(record);
+      setIsEditing(true);
+      const formattedValues = {
+        ...record,
+        ProjectStartDate: showDateFormat(record.ProjectStartDate),
+        ProjectEndDate: showDateFormat(record.ProjectEndDate),
+      };
+      form.setFieldsValue(formattedValues);
+      setModalVisible(true);
+    },
+    [form],
+  );
 
   const closeModal = () => {
     setModalVisible(false);
@@ -114,6 +143,16 @@ const ProjectPage = () => {
   };
 
   const updateProject = async (Id: number, project: Add_project) => {
+    if (
+      project.ProjectEndDate &&
+      project.ProjectEndDate < project.ProjectStartDate
+    ) {
+      show({
+        result: 1,
+        messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
+      });
+      return null;
+    }
     const newProject = {
       Id: Id,
       ...project,
@@ -126,31 +165,78 @@ const ProjectPage = () => {
     });
   };
 
-  const addProject = async (newProject: any) => {
-    if (newProject.ProjectEndDate > newProject.ProjectStartDate) {
-      const result: any = await projectAPI.createproject(newProject);
-      setNewID(result.result);
-      show({
-        result: result.result,
-        messageDone: 'Thêm dự án thành công',
-        messageError: 'Thêm dự án thất bại',
-      });
-    } else {
+  const addProject = useCallback(async (newProject: any) => {
+    if (
+      newProject.ProjectEndDate &&
+      newProject.ProjectEndDate < newProject.ProjectStartDate
+    ) {
       show({
         result: 1,
         messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
       });
+      return null;
     }
-  };
+    const result: any = await projectAPI.createproject(newProject);
+    show({
+      result: result.result,
+      messageDone: 'Thêm dự án thành công',
+      messageError: 'Thêm dự án thất bại',
+    });
+    return result.result;
+  }, []);
+
+  const addDocuments = useCallback(
+    async (ID_Product: number, uploadedDocuments: any) => {
+      if (uploadedDocuments.length > 0) {
+        for (const doc of uploadedDocuments) {
+          await documentAPI.createdocument({
+            DocumentName: doc.DocumentName,
+            DocumentLink: doc.DocumentLink,
+            RelatedId: ID_Product,
+            RelatedType: 'Project',
+          });
+        }
+      }
+    },
+    [],
+  );
+
+  const UpDocuments = useCallback(async (documentupload: any[]) => {
+    const updatedDataDocuments = documentupload.filter(
+      (doc: any) =>
+        !documentAfter.some(
+          (newDoc: any) =>
+            newDoc.DocumentName === doc.DocumentName &&
+            newDoc.DocumentLink === doc.DocumentLink,
+        ),
+    );
+    if (updatedDataDocuments.length > 0) {
+      for (const doc of updatedDataDocuments) {
+        await documentAPI.updatedocument(doc);
+      }
+    }
+  }, []);
+
   const handleSave = async () => {
     try {
       const values: any = await form.validateFields();
-
+      debugger;
       setLoading(true);
-      editingProject
-        ? await updateProject(editingProject.Id, values)
-        : await addProject(values);
-
+      let uploadedDocuments: any = [];
+      let newIDProject, result: any;
+      if (documents.length > 0) {
+        const result = await uploadFile(documents);
+        uploadedDocuments = result.documents || [];
+      }
+      if (editingProject) {
+        result = await updateProject(editingProject.Id, values);
+        await UpDocuments(uploadedDocuments);
+        const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
+        await addDocuments(editingProject.Id, newDocuments);
+      } else {
+        newIDProject = await addProject(values);
+        await addDocuments(newIDProject, uploadedDocuments);
+      }
       await ProjectsByPageOrder(currentPage, pageSize, orderType);
       closeModal();
     } catch (error) {
@@ -230,9 +316,11 @@ const ProjectPage = () => {
         width="60%"
       >
         <ProjectForm
-          formdulieu={form}
+          formdata={form}
           documents={documents}
           setDocuments={setDocuments}
+          partners={partners}
+          departments={departments}
         />
       </Modal>
     </Card>

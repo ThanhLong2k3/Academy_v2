@@ -8,15 +8,18 @@ export const documentAPI = {
       await CallApi.getAll<Up_Document_DTO>('document');
     return data;
   },
-  GetDocuments_by_IdRelated: async (relatedId: number) => {
+  GetDocuments_by_IdRelated: async (relatedId: number, relatedType: string) => {
     const queryParams = new URLSearchParams({
       relatedId: relatedId.toString(),
+      relatedType: relatedType.toString(),
     });
 
     const data: Up_Document_DTO[] = await CallApi.getAll<Up_Document_DTO>(
       `document?${queryParams.toString()}`,
     );
-
+    if (relatedType) {
+      queryParams.append('relatedType', relatedType);
+    }
     return data;
   },
 

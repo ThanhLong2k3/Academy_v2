@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card, message } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { Get_Product, Add_Product } from '@/models/product.model';
@@ -12,18 +12,18 @@ import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 import { showDateFormat } from '@/utils/date';
 import { uploadFile } from '@/libs/api/upload.api';
-import { Add_Document_DTO } from '@/models/document.model';
 import { documentAPI } from '@/libs/api/document.api';
-import { Department_DTO } from '@/models/department.model';
+import type { Department_DTO } from '@/models/department.model';
 import { DepartmentAPI } from '@/libs/api/department.api';
+import { Up_Document_DTO } from '@/models/document.model';
+
 const ProductPage = () => {
-  const [Products, setProducts] = useState<Get_Product[]>([]);
+  const [products, setProducts] = useState<Get_Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Get_Product | null>(
     null,
   );
-  const [isEditing, setIsEditing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -33,31 +33,16 @@ const ProductPage = () => {
   const { show } = useNotification();
   const [documents, setDocuments] = useState<any[]>([]);
   const [departments, setDepartments] = useState<Department_DTO[]>([]);
-  const [documentAfter, setdocumentAfter] = useState<any[]>([]);
+  const [documentAfter, setDocumentAfter] = useState<any[]>([]);
 
-  useEffect(() => {
-    Get_ProductsByPageOrder(currentPage, pageSize, orderType, searchText);
-    Get_Departments();
-  }, [currentPage, pageSize, orderType, searchText]);
-
-  const Get_Departments = async () => {
-    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
-    setDepartments(data);
-  };
-
-  const Get_ProductsByPageOrder = async (
-    pageIndex: number,
-    pageSize: number,
-    orderType: 'ASC' | 'DESC',
-    ProductName?: string,
-  ) => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await productAPI.getproductsByPageOrder(
-        pageIndex,
+        currentPage,
         pageSize,
         orderType,
-        ProductName,
+        searchText,
       );
       setTotal(data[0].TotalRecords);
       setProducts(data);
@@ -69,157 +54,206 @@ const ProductPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, orderType, searchText]);
 
-  const handleRefresh = () => {
+  const fetchDepartments = useCallback(async () => {
+    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
+    setDepartments(data);
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchDepartments();
+  }, [fetchProducts, fetchDepartments]);
+
+  const handleRefresh = useCallback(() => {
     setSearchText('');
-    Get_ProductsByPageOrder(1, pageSize, orderType);
-  };
+    setCurrentPage(1);
+    fetchProducts();
+  }, [fetchProducts]);
 
-  const handleSearch = (value: string) => {
-    Get_ProductsByPageOrder(1, pageSize, orderType, value);
-  };
+  const handleSearch = useCallback((value: string) => {
+    setSearchText(value);
+    setCurrentPage(1);
+  }, []);
 
-  const openCreateModal = () => {
+  const handlePageChange = useCallback((page: number, size: number) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  }, []);
+
+  const openCreateModal = useCallback(() => {
     setEditingProduct(null);
-    setIsEditing(false);
     form.resetFields();
     setModalVisible(true);
-  };
+  }, [form]);
 
-  const openEditModal = async (record: Get_Product) => {
-    const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
-      record.Id,
-    );
+  const openEditModal = useCallback(
+    async (record: Get_Product) => {
+      const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+        record.Id,
+        'Product',
+      );
+      setDocumentAfter(dataDocuments || []);
+      setDocuments(dataDocuments || []);
 
-    if (dataDocuments) {
-      console.log('data lấy ra riêng', dataDocuments);
-      setDocuments(dataDocuments);
-      setdocumentAfter(dataDocuments);
-    } else {
-      setDocuments([]);
-    }
+      setEditingProduct(record);
+      const formattedValues = {
+        ...record,
+        ProductStartDate: showDateFormat(record.ProductStartDate),
+        ProductEndDate: showDateFormat(record.ProductEndDate),
+      };
+      form.setFieldsValue(formattedValues);
+      setModalVisible(true);
+    },
+    [form],
+  );
 
-    setEditingProduct(record);
-    setIsEditing(true);
-    const formattedValues = {
-      ...record,
-      ProductStartDate: showDateFormat(record.ProductStartDate),
-      ProductEndDate: showDateFormat(record.ProductEndDate),
-    };
-
-    form.setFieldsValue(formattedValues);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setDocuments([]);
     setModalVisible(false);
     setEditingProduct(null);
-    setIsEditing(false);
     form.resetFields();
-  };
+  }, [form]);
 
-  const handleDelete = async (record: Get_Product) => {
-    try {
-      const data: any = await productAPI.deleteproduct(record.Id);
-      show({
-        result: data.result,
-        messageDone: 'Cập nhập sản phẩm thành công',
-        messageError: 'Cập sản phẩm thất bại',
-      });
-      Get_ProductsByPageOrder(currentPage, pageSize, orderType);
-    } catch (error) {
-      show({
-        result: 1,
-        messageError: 'Lỗi xóa sản phẩm',
-      });
-    }
-  };
+  const handleDelete = useCallback(
+    async (record: Get_Product) => {
+      try {
+        const data: any = await productAPI.deleteproduct(record.Id);
+        show({
+          result: data.result,
+          messageDone: 'Xóa sản phẩm thành công',
+          messageError: 'Xóa sản phẩm thất bại',
+        });
+        fetchProducts();
+      } catch (error) {
+        show({
+          result: 1,
+          messageError: 'Lỗi xóa sản phẩm',
+        });
+      }
+    },
+    [fetchProducts, show],
+  );
 
-  const addProduct = async (newProduct: Add_Product) => {
+  const addProduct = useCallback(async (newProduct: Add_Product) => {
     if (
       newProduct.ProductEndDate &&
       newProduct.ProductEndDate < newProduct.ProductStartDate
     ) {
-      message.error('Ngày kết thúc phải lớn hơn ngày bắt đầu');
-      return;
+      show({
+        result: 1,
+        messageError: 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
+      });
+      return null;
     }
-
     const result: any = await productAPI.createproduct(newProduct);
     return result.result;
-  };
+  }, []);
 
-  const updateproduct = async (Id: number, product: Add_Product) => {
-    const newProduct = {
-      Id,
-      ...product,
-    };
-    const result: any = await productAPI.updateproduct(newProduct);
-    if (result.result !== 0) {
-      throw new Error('Failed to update product');
-    }
-  };
-  const addDocuments = async (ID_Product: number, uploadedDocuments: any) => {
-    if (uploadedDocuments.length > 0) {
-      for (const doc of uploadedDocuments) {
-        await documentAPI.createdocument({
-          DocumentName: doc.DocumentName,
-          DocumentLink: doc.DocumentUrl,
-          RelatedId: ID_Product,
-          RelatedType: 'Product',
+  const updateProduct = useCallback(
+    async (Id: number, product: Add_Product) => {
+      if (
+        product.ProductEndDate &&
+        product.ProductEndDate < product.ProductStartDate
+      ) {
+        show({
+          result: 1,
+          messageError: 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
         });
+        return null;
+      }
+      const newProduct = { Id, ...product };
+      const result: any = await productAPI.updateproduct(newProduct);
+      return result.result;
+    },
+    [],
+  );
+
+  const addDocuments = useCallback(
+    async (ID_Product: number, uploadedDocuments: any) => {
+      if (uploadedDocuments.length > 0) {
+        for (const doc of uploadedDocuments) {
+          await documentAPI.createdocument({
+            DocumentName: doc.DocumentName,
+            DocumentLink: doc.DocumentLink,
+            RelatedId: ID_Product,
+            RelatedType: 'Product',
+          });
+        }
+      }
+    },
+    [],
+  );
+
+  const UpDocuments = useCallback(async (documentupload: any[]) => {
+    const updatedDataDocuments = documentupload.filter(
+      (doc: any) =>
+        !documentAfter.some(
+          (newDoc: any) =>
+            newDoc.DocumentName === doc.DocumentName &&
+            newDoc.DocumentLink === doc.DocumentLink,
+        ),
+    );
+    if (updatedDataDocuments.length > 0) {
+      for (const doc of updatedDataDocuments) {
+        await documentAPI.updatedocument(doc);
       }
     }
-  };
-  const handleSave = async () => {
+  }, []);
+
+  const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-
       let uploadedDocuments: any = [];
+      let newIDProduct, result: any;
       if (documents.length > 0) {
         const result = await uploadFile(documents);
         uploadedDocuments = result.documents || [];
       }
-
+      debugger;
       if (editingProduct) {
-        await updateproduct(editingProduct.Id, values);
-        debugger;
-
-        console.log('document data mới:', uploadedDocuments);
-        console.log('data document', documents);
-        console.log('document data cũ', documentAfter);
-
+        result = await updateProduct(editingProduct.Id, values);
+        await UpDocuments(uploadedDocuments);
         const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
         await addDocuments(editingProduct.Id, newDocuments);
-
-        console.log('Tài liệu cần thêm mới:', newDocuments);
       } else {
-        const newIDProduct: any = await addProduct(values);
-
+        newIDProduct = await addProduct(values);
         await addDocuments(newIDProduct, uploadedDocuments);
-
-        show({
-          result: newIDProduct,
-          messageDone: 'Thêm sản phẩm thành công!',
-          messageError: 'Thêm sản phẩm thất bại',
-        });
       }
 
-      await Get_ProductsByPageOrder(currentPage, pageSize, orderType);
+      show({
+        result: newIDProduct ? newIDProduct : result.result,
+        messageDone: editingProduct
+          ? 'Cập nhật sản phẩm thành công!'
+          : 'Thêm sản phẩm thành công!',
+        messageError: 'Thao tác sản phẩm thất bại',
+      });
+
+      await fetchProducts();
       closeModal();
     } catch (error) {
       console.error('Save error:', error);
       show({
         result: 1,
-        messageDone: 'Thêm sản phẩm thành công!',
-        messageError: 'Thêm sản phẩm thất bại',
+        messageError: 'Thao tác sản phẩm thất bại',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    form,
+    documents,
+    editingProduct,
+    documentAfter,
+    updateProduct,
+    addDocuments,
+    addProduct,
+    show,
+    fetchProducts,
+    closeModal,
+  ]);
 
   const columns = COLUMNS({
     columnType: Product_Colum,
@@ -261,7 +295,7 @@ const ProductPage = () => {
       <div className="py-4" style={{ marginTop: '20px' }}>
         <Table
           columns={columns}
-          dataSource={Products}
+          dataSource={products}
           rowKey="Id"
           loading={loading}
           scroll={{ x: 800, y: 400 }}
@@ -272,10 +306,7 @@ const ProductPage = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size);
-            },
+            onChange: handlePageChange,
           }}
         />
       </div>

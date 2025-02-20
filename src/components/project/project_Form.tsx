@@ -1,37 +1,71 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, FormInstance, Row, Col, Card, Select } from 'antd';
+import {
+  Form,
+  Input,
+  FormInstance,
+  Row,
+  Col,
+  Card,
+  Select,
+  Button,
+  Upload,
+} from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { RULES_FORM } from '@/utils/validator';
 import { Partner_DTO } from '@/models/partners.model';
-import { GetDepartment } from '@/models/department.model';
-import { DepartmentAPI } from '@/libs/api/department.api';
-import { PartnerAPI } from '@/libs/api/partner.api';
+import { Department_DTO, GetDepartment } from '@/models/department.model';
+
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
+
+import { Popconfirm, Tooltip } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import { documentAPI } from '@/libs/api/document.api';
+import { useNotification } from '../UI_shared/Notification';
 
 interface ReusableFormProps {
-  formdulieu: FormInstance<any> | undefined;
+  partners: Partner_DTO[];
+  departments: Department_DTO[];
+  formdata: FormInstance<any> | undefined;
   documents: any[];
-  setDocuments: any;
+  setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const ProjectForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
-  const [partners, setPartner] = useState<Partner_DTO[]>([]);
-  const [departments, setDepartments] = useState<GetDepartment[]>([]);
+const ProjectForm: React.FC<ReusableFormProps> = ({
+  formdata,
+  documents,
+  setDocuments,
+  departments,
+  partners,
+}) => {
+  const { show } = useNotification();
+  const updateDocument = (index: number, field: string, value: any) => {
+    const newDocs = [...documents];
+    newDocs[index][field] = value;
+    setDocuments(newDocs);
+  };
 
-  useEffect(() => {
-    getDepartment();
-    getPartner();
-  }, []);
-  const getDepartment = async () => {
-    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
-    setDepartments(data);
+  const addDocument = () => {
+    setDocuments([
+      ...documents,
+      { DocumentName: '', DocumentFile: null, DocumentLink: '' },
+    ]);
   };
-  const getPartner = async () => {
-    const data = await PartnerAPI.getPartnersByPageOrder(1, 100, 'ASC');
-    setPartner(data);
+
+  const removeDocument = async (index: number, Id?: number) => {
+    if (Id) {
+      const result: any = await documentAPI.deletedocument(Id);
+      show({
+        result: result.result,
+        messageDone: 'Xóa tài liệu thành công !',
+        messageError: 'Xóa tài liệu thất bại! ',
+      });
+    }
+    setDocuments(documents.filter((_, i) => i !== index));
   };
+
   return (
-    <Form form={formdulieu} layout="vertical">
-      <Card title="Thông tin dự án" bordered={false}>
+    <Form form={formdata} layout="vertical">
+      <Card title="Thông tin dự án">
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -49,7 +83,7 @@ const ProjectForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
               rules={RULES_FORM.required}
             >
               <Select
-                options={departments.map((department: any) => ({
+                options={departments.map((department) => ({
                   label: department.DepartmentName,
                   value: department.DepartmentId,
                 }))}
@@ -108,6 +142,72 @@ const ProjectForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
         <Form.Item name="Description" label="Mô tả" rules={RULES_FORM.required}>
           <TextArea />
         </Form.Item>
+      </Card>
+      <Card title="Tài liệu đính kèm">
+        {documents.map((doc, index) => (
+          <Row gutter={16} key={index} align="middle">
+            <Col span={11}>
+              <Form.Item label="Tên tài liệu" required>
+                <Input
+                  value={doc.DocumentName}
+                  onChange={(e) =>
+                    updateDocument(index, 'DocumentName', e.target.value)
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col span={11}>
+              <Form.Item label="Tải file lên" required>
+                <Upload
+                  beforeUpload={(file) => {
+                    updateDocument(index, 'DocumentFile', file);
+                    return false;
+                  }}
+                  showUploadList={false}
+                >
+                  <Button icon={<UploadOutlined />}>Chọn file</Button>
+                </Upload>
+                {doc.DocumentFile && <p>{doc.DocumentFile.name}</p>}
+                {doc.DocumentLink && (
+                  <p>
+                    <a
+                      href={doc.DocumentLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {doc.DocumentLink.replace('/uploads/', '')}
+                    </a>
+                  </p>
+                )}
+              </Form.Item>
+            </Col>
+            <Col span={2}>
+              <Popconfirm
+                title="Bạn có chắc chắn muốn xóa?"
+                onConfirm={() => removeDocument(index, doc.Id)}
+                okText="Có"
+                cancelText="Không"
+              >
+                <Tooltip title="Xóa">
+                  <Button
+                    shape="circle"
+                    icon={<DeleteOutlined />}
+                    style={{ backgroundColor: 'red', color: 'white' }}
+                    className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            </Col>
+          </Row>
+        ))}
+        <Button
+          type="dashed"
+          onClick={addDocument}
+          block
+          icon={<PlusOutlined />}
+        >
+          Thêm tài liệu
+        </Button>
       </Card>
     </Form>
   );

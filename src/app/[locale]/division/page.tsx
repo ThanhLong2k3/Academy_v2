@@ -10,6 +10,8 @@ import { DivisiontForm } from '@/components/division/division_Form';
 import { Division_Colum } from '@/components/division/division_Table';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
+import { Department_DTO } from '@/models/department.model';
+import { DepartmentAPI } from '@/libs/api/department.api';
 
 const DivisionPage = () => {
   const [Divisions, setDivisions] = useState<GetDivision[]>([]);
@@ -26,11 +28,17 @@ const DivisionPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [orderType, setOrderType] = useState<'ASC' | 'DESC'>('ASC');
   const [total, setTotal] = useState<number>(10);
+  const [departments, setDepartments] = useState<Department_DTO[]>([]);
 
   useEffect(() => {
     GetPositionsByPageOrder(currentPage, pageSize, orderType, searchText);
+    getDepartment();
   }, [currentPage, pageSize, orderType]);
 
+  const getDepartment = async () => {
+    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
+    setDepartments(data);
+  };
   const GetPositionsByPageOrder = async (
     pageIndex: number,
     pageSize: number,
@@ -224,7 +232,6 @@ const DivisionPage = () => {
         />
       </div>
 
-      {/* Modal Form */}
       <Modal
         title={editingDivision ? 'Cập nhập bộ phận' : 'Thêm bộ phận'}
         open={modalVisible}
@@ -232,7 +239,7 @@ const DivisionPage = () => {
         onCancel={closeModal}
         width="60%"
       >
-        <DivisiontForm formdulieu={form} />
+        <DivisiontForm formdata={form} departments={departments} />
       </Modal>
     </Card>
   );

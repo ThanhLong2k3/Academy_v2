@@ -2,6 +2,13 @@ import { useColorState } from '@/stores/color.store';
 import Image from 'next/image';
 import { Flex, Dropdown } from 'antd';
 import {
+  themeLightConfig,
+  themeBlueConfig,
+  themeDarkConfig,
+  themeBrownConfig,
+} from '@/constants/theme';
+
+import {
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
@@ -52,9 +59,7 @@ const ThemeChanger = () => {
       }}
     >
       <button
-        onClick={() =>
-          setThemeColor({ token: { colorPrimary: 'rgb(13,68,138)' } })
-        }
+        onClick={() => setThemeColor(themeBlueConfig)}
         style={{
           backgroundColor: 'rgb(13,68,138)',
           borderRadius: '50%',
@@ -66,7 +71,7 @@ const ThemeChanger = () => {
       />
 
       <button
-        onClick={() => setThemeColor({ token: { colorPrimary: '#52c41a' } })}
+        onClick={() => setThemeColor(themeDarkConfig)}
         style={{
           backgroundColor: '#52c41a',
           borderRadius: '50%',
@@ -77,9 +82,21 @@ const ThemeChanger = () => {
         }}
       />
       <button
-        onClick={() => setThemeColor({ token: { colorPrimary: '#fffffff' } })}
+        onClick={() => setThemeColor(themeLightConfig)}
         style={{
           backgroundColor: '#fffffff',
+          borderRadius: '50%',
+          height: '15px',
+          width: '15px',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      />
+
+      <button
+        onClick={() => setThemeColor(themeBrownConfig)}
+        style={{
+          backgroundColor: '#48433d',
           borderRadius: '50%',
           height: '15px',
           width: '15px',

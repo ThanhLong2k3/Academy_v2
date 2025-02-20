@@ -6,8 +6,8 @@ import {
 } from '@/models/department.model';
 export const DepartmentAPI = {
   getAllDepartment: async () => {
-    const data: GetDepartment[] =
-      await CallApi.getAll<GetDepartment>('department');
+    const data: Department_DTO[] =
+      await CallApi.getAll<Department_DTO>('department');
     return data;
   },
   getDepartmentByPageOrder: async (

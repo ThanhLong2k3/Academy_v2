@@ -2,17 +2,12 @@
 
 import type React from 'react';
 import { Form, Input, Button, Row, Col, Upload, Select, Card } from 'antd';
-import {
-  MinusCircleOutlined,
-  PlusOutlined,
-  UploadOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { RULES_FORM } from '@/utils/validator';
 import { documentAPI } from '@/libs/api/document.api';
 import { useNotification } from '../UI_shared/Notification';
-import { Space, Popconfirm, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { ColumnType } from 'antd/es/table';
+import { Popconfirm, Tooltip } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 interface ReusableFormProps {
   departments: any[];
   formdata: any;

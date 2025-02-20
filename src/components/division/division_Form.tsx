@@ -2,27 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, FormInstance, Row, Col, Select } from 'antd';
 import { RULES_FORM } from '@/utils/validator';
 import TextArea from 'antd/es/input/TextArea';
-import { GetDepartment } from '@/models/department.model';
-import { DepartmentAPI } from '@/libs/api/department.api';
+import { Department_DTO } from '@/models/department.model';
 interface ReusableFormProps {
-  formdulieu: FormInstance<any> | undefined;
+  formdata: FormInstance<any> | undefined;
+  departments: Department_DTO[];
 }
 
-export const DivisiontForm: React.FC<ReusableFormProps> = ({ formdulieu }) => {
-  const [departments, setDepartments] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  const fetchDepartments = async () => {
-    const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
-    console.log(data);
-    setDepartments(data);
-  };
-
+export const DivisiontForm: React.FC<ReusableFormProps> = ({
+  formdata,
+  departments,
+}) => {
   return (
-    <Form form={formdulieu} layout="vertical">
+    <Form form={formdata} layout="vertical">
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item

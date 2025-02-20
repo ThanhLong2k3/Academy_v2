@@ -5,15 +5,19 @@ import { Add_Document_DTO, Up_Document_DTO } from '@/models/document.model';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const RelatedId = Number(searchParams.get('relatedId'));
-
-  return getDocuments_by_IdRelated(RelatedId);
+  const RelatedType = searchParams.get('relatedType') || undefined;
+  console.log(searchParams);
+  return getDocuments_by_IdRelated(RelatedId, RelatedType);
 }
 
-export async function getDocuments_by_IdRelated(relatedId: number) {
+export async function getDocuments_by_IdRelated(
+  relatedId: number,
+  relatedType: string | undefined,
+) {
   try {
     const result = await db_Provider<Up_Document_DTO[]>(
-      'CALL GetDocuments_by_IdRelated(?)',
-      [relatedId],
+      'CALL GetDocuments_by_IdRelated(?,?)',
+      [relatedId, relatedType],
     );
     return result;
   } catch (error) {

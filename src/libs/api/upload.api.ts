@@ -60,7 +60,7 @@ export const uploadFile = async (
   }
 
   try {
-    const response = await fetch('/api/uploadImage', {
+    const response = await fetch('/api/uploadfile', {
       method: 'POST',
       body: formData,
     });
@@ -106,3 +106,61 @@ export const uploadFile = async (
     };
   }
 };
+
+export async function uploadFilesImage(files: File[]): Promise<string[]> {
+  const formData = new FormData();
+
+  files.forEach((file, index) => {
+    formData.append(`file${index}`, file);
+  });
+
+  try {
+    const response = await fetch('/api/uploadfile', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      return data.uploadedPaths;
+    } else {
+      throw new Error(data.error || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Error uploading files:', error);
+    throw error;
+  }
+}
+
+export async function getInforFile(filePath: string) {
+  if (!filePath) {
+    throw new Error('Thiếu đường dẫn file');
+  }
+
+  try {
+    const response = await fetch(
+      `/api/uploadfile?path=${encodeURIComponent(filePath)}`,
+      {
+        method: 'GET',
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Lấy thông tin file thất bại');
+    }
+
+    return {
+      success: true,
+      fileInfo: data, // Thông tin file trả về
+    };
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin file:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Lỗi không xác định',
+    };
+  }
+}

@@ -970,10 +970,141 @@ DELIMITER ;
 
 DELIMITER $$
 
-CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT)
+CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT,IN RelatedType varchar)
 BEGIN 
-    SELECT * FROM document WHERE RelatedId = ID AND IsDeleted = 0;
+    SELECT * FROM document WHERE RelatedId = ID AND RelatedType=RelatedType  AND IsDeleted = 0;
 END $$
 
 DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE GetPersonnelByPageOrder(
+    IN p_PageIndex INT,         -- Trang hiện tại
+    IN p_PageSize INT,          -- Số dòng trên mỗi trang
+    IN p_OrderType VARCHAR(4),  -- 'ASC' hoặc 'DESC'
+    IN p_PersonnelName VARCHAR(255)  -- Tên nhân sự cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xây dựng câu SQL động
+    SET @sql = CONCAT(
+        'SELECT p.Id, p.PersonnelName, p.DivisionId, p.PositionId,p.Picture,p.Description, ',
+        'd.DivisionName, pos.PositionName, p.DateOfBirth, p.Email, p.PhoneNumber, ',
+        'p.JoinDate, p.EndDate, p.WorkStatus, COUNT(*) OVER () AS TotalRecords ',
+        'FROM Personnel p ',
+        'LEFT JOIN Division d ON p.DivisionId = d.Id ',
+        'LEFT JOIN `Position` pos ON p.PositionId = pos.Id ',
+        'WHERE p.IsDeleted = 0 '
+    );
+
+    -- Nếu có tên nhân sự, thêm điều kiện tìm kiếm
+    IF p_PersonnelName IS NOT NULL AND p_PersonnelName != '' THEN
+        SET @sql = CONCAT(@sql, ' AND p.PersonnelName LIKE ''%', p_PersonnelName, '%'' ');
+    END IF;
+
+    -- Thêm sắp xếp, giới hạn và offset (chèn trực tiếp vào chuỗi SQL)
+    SET @sql = CONCAT(@sql, ' ORDER BY p.PersonnelName ', p_OrderType, 
+                      ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset);
+
+    -- Debug câu SQL (chạy SELECT @sql; để kiểm tra)
+    -- SELECT @sql;
+
+    -- Chuẩn bị và thực thi câu SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+-- Thêm Personnel
+CREATE PROCEDURE AddPersonnel(
+    IN p_DivisionId INT,
+    IN p_PersonnelName NVARCHAR(50),
+    IN p_PositionId INT,
+    IN p_DateOfBirth DATE,
+    IN p_Picture NVARCHAR(255),
+    IN p_Email NVARCHAR(50),
+    IN p_Description TEXT,
+    IN p_PhoneNumber VARCHAR(10),
+    IN p_JoinDate DATE,
+    IN p_EndDate DATE,
+    IN p_WorkStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO Personnel (DivisionId, PersonnelName, PositionId, DateOfBirth, Picture, Email, Description, PhoneNumber, JoinDate, EndDate, WorkStatus)
+    VALUES (p_DivisionId, p_PersonnelName, p_PositionId, p_DateOfBirth, p_Picture, p_Email, p_Description, p_PhoneNumber, p_JoinDate, p_EndDate, p_WorkStatus);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật Personnel
+CREATE PROCEDURE UpdatePersonnel(
+    IN p_Id INT,
+    IN p_DivisionId INT,
+    IN p_PersonnelName NVARCHAR(50),
+    IN p_PositionId INT,
+    IN p_DateOfBirth DATE,
+    IN p_Picture NVARCHAR(255),
+    IN p_Email NVARCHAR(50),
+    IN p_Description TEXT,
+    IN p_PhoneNumber VARCHAR(10),
+    IN p_JoinDate DATE,
+    IN p_EndDate DATE,
+    IN p_WorkStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Personnel
+    SET DivisionId = p_DivisionId,
+        PersonnelName = p_PersonnelName,
+        PositionId = p_PositionId,
+        DateOfBirth = p_DateOfBirth,
+        Picture = p_Picture,
+        Email = p_Email,
+        Description = p_Description,
+        PhoneNumber = p_PhoneNumber,
+        JoinDate = p_JoinDate,
+        EndDate = p_EndDate,
+        WorkStatus = p_WorkStatus
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm Personnel
+CREATE PROCEDURE DeletePersonnel(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Personnel
+    SET IsDeleted = 1
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+
+DELIMITER ;
+call GetPersonnelByPageOrder(1,10,"ASC","")
 

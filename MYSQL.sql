@@ -1,6 +1,7 @@
 CREATE DATABASE Academi_v4;
 
 
+
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -44,7 +45,7 @@ CREATE TABLE Personnel (
     PersonnelName NVARCHAR(50) NOT NULL,
     PositionId INT,
     DateOfBirth DATE NULL,
-    Picture BLOB NULL,
+    Picture  NVARCHAR(255) NULL,
     Email NVARCHAR(50),
     Description TEXT NULL,
     PhoneNumber VARCHAR(10),

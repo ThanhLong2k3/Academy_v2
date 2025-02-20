@@ -23,9 +23,10 @@ import styles from './siderbar.module.scss';
 type MenuItem = Required<MenuProps>['items'][number];
 
 const routeMap: { [key: string]: string } = {
+  sub5: '/vi',
   '12': '/vi/position',
   '10': '/vi/division',
-  '1': '/Staff',
+  '1': '/vi/personnel',
   '6': '/vi/project',
   '7': '/Topics',
   '8': '/Training',
@@ -62,8 +63,13 @@ const SideBar = () => {
   const sidebarItems = useMemo(
     () => [
       {
+        key: 'sub5',
+        label: 'Doash Board',
+        icon: <ProjectOutlined />,
+      },
+      {
         key: 'sub1',
-        label: 'Quản lý con người',
+        label: 'Quản lý đối tượng',
         icon: <UserOutlined />,
         children: [
           {
@@ -152,7 +158,7 @@ const SideBar = () => {
     <div
       className="h-full flex flex-col"
       style={{
-        backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+        backgroundColor: themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
         color: textColor,
         height: '100vh',
       }}
@@ -160,7 +166,7 @@ const SideBar = () => {
       <div
         className="flex items-center justify-center h-16 px-4"
         style={{
-          backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+          backgroundColor: themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
           color: textColor,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',
@@ -178,11 +184,12 @@ const SideBar = () => {
         />
       </div>
 
-      <div className={styles.menuContainer}>
+      <div className={styles.menuContainer} style={{ marginTop: '15px' }}>
         <ConfigProvider
           theme={{
             token: {
-              colorBgContainer: themeColor?.token?.colorPrimary || '#ffffff',
+              colorBgContainer:
+                themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
               colorText: textColor,
             },
             components: {
@@ -203,7 +210,8 @@ const SideBar = () => {
             mode="inline"
             items={sidebarItems}
             style={{
-              backgroundColor: themeColor?.token?.colorPrimary || '#ffffff',
+              backgroundColor:
+                themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
               color: textColor,
             }}
           />
