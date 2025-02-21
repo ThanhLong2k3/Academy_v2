@@ -21,6 +21,7 @@ import { DepartmentAPI } from '@/libs/api/department.api';
 import { PartnerAPI } from '@/libs/api/partner.api';
 import { uploadFile } from '@/libs/api/upload.api';
 import { documentAPI } from '@/libs/api/document.api';
+import { useAddDocuments, useUpdateDocuments } from '../document/page';
 const ProjectPage = () => {
   const [Projects, setProjects] = useState<Get_project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,8 @@ const ProjectPage = () => {
   const [partners, setPartners] = useState<Partner_DTO[]>([]);
   const [departments, setDepartments] = useState<Department_DTO[]>([]);
   const [documentAfter, setDocumentAfter] = useState<any[]>([]);
-
+  const { updateDocuments } = useUpdateDocuments();
+  const { addDocuments } = useAddDocuments();
   useEffect(() => {
     ProjectsByPageOrder(currentPage, pageSize, orderType, searchText);
     getDepartment();
@@ -158,11 +160,7 @@ const ProjectPage = () => {
       ...project,
     };
     const result: any = await projectAPI.updateproject(newProject);
-    show({
-      result: result.result,
-      messageDone: 'Cập nhật dự án thành công',
-      messageError: 'Cập nhật dự án thất bại',
-    });
+    return result.result;
   };
 
   const addProject = useCallback(async (newProject: any) => {
@@ -177,44 +175,7 @@ const ProjectPage = () => {
       return null;
     }
     const result: any = await projectAPI.createproject(newProject);
-    show({
-      result: result.result,
-      messageDone: 'Thêm dự án thành công',
-      messageError: 'Thêm dự án thất bại',
-    });
     return result.result;
-  }, []);
-
-  const addDocuments = useCallback(
-    async (ID_Product: number, uploadedDocuments: any) => {
-      if (uploadedDocuments.length > 0) {
-        for (const doc of uploadedDocuments) {
-          await documentAPI.createdocument({
-            DocumentName: doc.DocumentName,
-            DocumentLink: doc.DocumentLink,
-            RelatedId: ID_Product,
-            RelatedType: 'Project',
-          });
-        }
-      }
-    },
-    [],
-  );
-
-  const UpDocuments = useCallback(async (documentupload: any[]) => {
-    const updatedDataDocuments = documentupload.filter(
-      (doc: any) =>
-        !documentAfter.some(
-          (newDoc: any) =>
-            newDoc.DocumentName === doc.DocumentName &&
-            newDoc.DocumentLink === doc.DocumentLink,
-        ),
-    );
-    if (updatedDataDocuments.length > 0) {
-      for (const doc of updatedDataDocuments) {
-        await documentAPI.updatedocument(doc);
-      }
-    }
   }, []);
 
   const handleSave = async () => {
@@ -230,12 +191,12 @@ const ProjectPage = () => {
       }
       if (editingProject) {
         result = await updateProject(editingProject.Id, values);
-        await UpDocuments(uploadedDocuments);
-        const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
-        await addDocuments(editingProject.Id, newDocuments);
+
+        await updateDocuments(uploadedDocuments, documentAfter);
+        await addDocuments('Project', editingProject.Id, uploadedDocuments);
       } else {
         newIDProject = await addProject(values);
-        await addDocuments(newIDProject, uploadedDocuments);
+        await addDocuments('Project', newIDProject, uploadedDocuments);
       }
       await ProjectsByPageOrder(currentPage, pageSize, orderType);
       closeModal();

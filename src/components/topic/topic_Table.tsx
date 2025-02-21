@@ -1,8 +1,7 @@
 import { ColumnType } from '../UI_shared/ColumType';
 import moment from 'moment';
 import { Tag } from 'antd';
-
-export const Project_Colum: ColumnType[] = [
+export const Topic_Colum: ColumnType[] = [
   {
     title: 'STT',
     key: 'stt',
@@ -13,29 +12,19 @@ export const Project_Colum: ColumnType[] = [
     ),
   },
   {
-    title: 'Tên dự án',
-    dataIndex: 'ProjectName',
-    key: 'Id',
+    title: 'Tên đề tài',
+    dataIndex: 'TopicName',
+    key: 'TopicName',
   },
   {
     title: 'Tên đơn vị',
     dataIndex: 'DepartmentName',
-    key: 'DepartmentId',
-  },
-  {
-    title: 'Tên đối tác',
-    dataIndex: 'PartnerName',
-    key: 'PartnerId',
-  },
-  {
-    title: 'Mô tả',
-    dataIndex: 'Description',
-    key: 'Description',
+    key: 'DepartmentName',
   },
   {
     title: 'Ngày bắt đầu',
-    dataIndex: 'ProjectStartDate',
-    key: 'ProjectStartDate',
+    dataIndex: 'TopicStartDate',
+    key: 'TopicStartDate',
     align: 'center',
     width: '10%',
     render: (text) => (
@@ -44,11 +33,11 @@ export const Project_Colum: ColumnType[] = [
   },
   {
     title: 'Trạng thái',
-    dataIndex: 'ProjectStatus',
-    key: 'ProjectStatus',
+    dataIndex: 'TopicStatus',
+    key: 'TopicStatus',
     width: '10%',
     render: (status) => (
-      <Tag color={status === 'Đang triển khai' ? 'green' : 'red'}>{status}</Tag>
+      <Tag color={status === 'Đã nghiệm thu' ? 'green' : 'red'}>{status}</Tag>
     ),
   },
 ];

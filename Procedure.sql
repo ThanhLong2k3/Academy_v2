@@ -970,9 +970,9 @@ DELIMITER ;
 
 DELIMITER $$
 
-CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT,IN RelatedType varchar)
+CREATE PROCEDURE GetDocuments_by_IdRelated(IN ID INT,IN Related_Type NVARCHAR(50))
 BEGIN 
-    SELECT * FROM document WHERE RelatedId = ID AND RelatedType=RelatedType  AND IsDeleted = 0;
+    SELECT * FROM document WHERE RelatedId = ID AND RelatedType=Related_Type  AND IsDeleted = 0;
 END $$
 
 DELIMITER ;
@@ -1106,5 +1106,324 @@ END$$
 
 
 DELIMITER ;
-call GetPersonnelByPageOrder(1,10,"ASC","")
+-- IntellectualPropertyImage
+
+DELIMITER $$
+
+-- Thêm IntellectualProperty
+CREATE PROCEDURE AddIntellectualProperty(
+    IN p_DepartmentId INT,
+    IN p_IntellectualPropertyName NVARCHAR(100),
+    IN p_IntellectualPropertyImage TEXT,
+    IN p_Description TEXT,
+    IN p_IntellectualPropertyStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO IntellectualProperty (DepartmentId, IntellectualPropertyName, IntellectualPropertyImage, Description, IntellectualPropertyStatus)
+    VALUES (p_DepartmentId, p_IntellectualPropertyName, p_IntellectualPropertyImage, p_Description, p_IntellectualPropertyStatus);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật IntellectualProperty
+CREATE PROCEDURE UpdateIntellectualProperty(
+    IN p_Id INT,
+    IN p_DepartmentId INT,
+    IN p_IntellectualPropertyName NVARCHAR(100),
+    IN p_IntellectualPropertyImage TEXT,
+    IN p_Description TEXT,
+    IN p_IntellectualPropertyStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE IntellectualProperty
+    SET DepartmentId = p_DepartmentId,
+        IntellectualPropertyName = p_IntellectualPropertyName,
+        IntellectualPropertyImage = p_IntellectualPropertyImage,
+        Description = p_Description,
+        IntellectualPropertyStatus = p_IntellectualPropertyStatus,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm IntellectualProperty
+CREATE PROCEDURE DeleteIntellectualProperty(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE IntellectualProperty
+    SET IsDeleted = 1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách IntellectualProperty có phân trang, sắp xếp và lấy cả tên phòng ban
+CREATE PROCEDURE GetIntellectualPropertiesByPageOrder(
+    IN p_PageIndex INT,        -- Trang hiện tại
+    IN p_PageSize INT,         -- Số dòng trên mỗi trang
+    IN p_OrderType VARCHAR(4), -- 'ASC' hoặc 'DESC'
+    IN p_IntellectualPropertyName VARCHAR(255) -- Tên cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_Filter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_IntellectualPropertyName IS NOT NULL AND p_IntellectualPropertyName != '' THEN
+        SET v_Filter = CONCAT(" AND ip.IntellectualPropertyName LIKE '%", p_IntellectualPropertyName, "%' ");
+    ELSE
+        SET v_Filter = "";
+    END IF;
+
+    -- Xây dựng SQL động
+    SET @sql = CONCAT(
+        'SELECT ip.*, d.Id AS DepartmentId, d.DepartmentName, COUNT(*) OVER () AS TotalRecords 
+        FROM IntellectualProperty ip
+        LEFT JOIN Department d ON ip.DepartmentId = d.Id
+        WHERE ip.IsDeleted=0',
+        v_Filter,
+        ' ORDER BY ip.IntellectualPropertyName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ; 
+
+-- trainging course
+DELIMITER $$
+
+-- Thêm khóa đào tạo
+CREATE PROCEDURE AddTrainingCourse(
+    IN p_CourseName NVARCHAR(100),
+    IN p_ServiceStatus NVARCHAR(50),
+    IN p_Description TEXT,
+    IN p_Duration INT,
+    IN p_InstructorId INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO TrainingCourse (CourseName, ServiceStatus, Description, Duration, InstructorId)
+    VALUES (p_CourseName, p_ServiceStatus, p_Description, p_Duration, p_InstructorId);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật khóa đào tạo
+CREATE PROCEDURE UpdateTrainingCourse(
+    IN p_Id INT,
+    IN p_CourseName NVARCHAR(100),
+    IN p_ServiceStatus NVARCHAR(50),
+    IN p_Description TEXT,
+    IN p_Duration INT,
+    IN p_InstructorId INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE TrainingCourse
+    SET CourseName = p_CourseName,
+        ServiceStatus = p_ServiceStatus,
+        Description = p_Description,
+        Duration = p_Duration,
+        InstructorId = p_InstructorId,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm khóa đào tạo
+CREATE PROCEDURE DeleteTrainingCourse(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE TrainingCourse
+    SET IsDeleted = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách khóa đào tạo theo phân trang và sắp xếp
+CREATE PROCEDURE GetTrainingCoursesByPageOrder(
+    IN p_PageIndex INT,         -- Trang hiện tại
+    IN p_PageSize INT,          -- Số dòng trên mỗi trang
+    IN p_OrderType VARCHAR(4),  -- 'ASC' hoặc 'DESC'
+    IN p_CourseName VARCHAR(255)  -- Tên khóa đào tạo cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_CourseFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_CourseName IS NOT NULL AND p_CourseName != '' THEN
+        SET v_CourseFilter = CONCAT(" AND tc.CourseName LIKE '%", p_CourseName, "%' ");
+    ELSE
+        SET v_CourseFilter = "";
+    END IF;
+
+    -- Xây dựng SQL lấy danh sách khóa đào tạo kèm tổng số bản ghi
+    SET @sql = CONCAT(
+        'SELECT tc.*, p.PersonnelName AS InstructorName, COUNT(*) OVER () AS TotalRecords 
+        FROM TrainingCourse tc 
+        LEFT JOIN Personnel p ON tc.InstructorId = p.Id 
+        WHERE tc.IsDeleted = 0',
+        v_CourseFilter,
+        ' ORDER BY tc.CourseName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
+-- topic
+
+DELIMITER $$
+
+-- Thêm Topic
+CREATE PROCEDURE AddTopic(
+    IN p_TopicName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_TopicStartDate DATE,
+    IN p_TopicEndDate DATE,
+    IN p_Description TEXT,
+    IN p_TopicStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE v_NewTopicId INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT -1 AS NewTopicId;
+    END;
+
+    INSERT INTO Topic (TopicName, DepartmentId, TopicStartDate, TopicEndDate, Description, TopicStatus)
+    VALUES (p_TopicName, p_DepartmentId, p_TopicStartDate, p_TopicEndDate, p_Description, p_TopicStatus);
+
+    SET v_NewTopicId = LAST_INSERT_ID();
+
+    SELECT v_NewTopicId AS NewId;
+END$$
+
+-- Cập nhật Topic
+CREATE PROCEDURE UpdateTopic(
+    IN p_Id INT,
+    IN p_TopicName NVARCHAR(50),
+    IN p_DepartmentId INT,
+    IN p_TopicStartDate DATE,
+    IN p_TopicEndDate DATE,
+    IN p_Description TEXT,
+    IN p_TopicStatus NVARCHAR(50)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Topic
+    SET TopicName = p_TopicName,
+        DepartmentId = p_DepartmentId,
+        TopicStartDate = p_TopicStartDate,
+        TopicEndDate = p_TopicEndDate,
+        Description = p_Description,
+        TopicStatus = p_TopicStatus,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id AND IsDeleted = 0;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm Topic
+CREATE PROCEDURE DeleteTopic(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE Topic
+    SET IsDeleted = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE Id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách Topic có phân trang và sắp xếp
+CREATE PROCEDURE GetTopicsByPageOrder(
+    IN p_PageIndex INT,
+    IN p_PageSize INT,
+    IN p_OrderType VARCHAR(4),
+    IN p_TopicName VARCHAR(255)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_TopicFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    IF p_TopicName IS NOT NULL AND p_TopicName != '' THEN
+        SET v_TopicFilter = CONCAT(" AND t.TopicName LIKE '%", p_TopicName, "%' ");
+    ELSE
+        SET v_TopicFilter = "";
+    END IF;
+
+    SET @sql = CONCAT(
+        'SELECT t.*, d.DepartmentName, COUNT(*) OVER () AS TotalRecords 
+         FROM Topic t 
+         JOIN Department d ON t.DepartmentId = d.Id 
+         WHERE t.IsDeleted=0',
+        v_TopicFilter,
+        ' ORDER BY t.TopicName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
 

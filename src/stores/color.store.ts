@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 import { ThemeConfig } from 'antd/lib/config-provider';
-import {
-  themeLightConfig,
-  themeBlueConfig,
-  themeDarkConfig,
-  themeBrownConfig,
-} from '@/constants/theme';
+import { themeBlueConfig } from '@/constants/theme';
 
 interface ColorState {
   themeColor: ThemeConfig;

@@ -151,11 +151,12 @@ CREATE TABLE Service(
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+
 CREATE TABLE IntellectualProperty(
     Id INT AUTO_INCREMENT PRIMARY KEY,
     DepartmentId INT,
     IntellectualPropertyName NVARCHAR(100),
-    IntellectualPropertyImage BLOB,
+   IntellectualPropertyImage TEXT NULL,
     Description TEXT NULL,
     IntellectualPropertyStatus NVARCHAR(50),
     IsDeleted BOOLEAN DEFAULT 0,

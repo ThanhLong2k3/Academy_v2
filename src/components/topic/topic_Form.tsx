@@ -1,41 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Form,
-  Input,
-  FormInstance,
-  Row,
-  Col,
-  Card,
-  Select,
-  Button,
-  Upload,
-} from 'antd';
-import TextArea from 'antd/es/input/TextArea';
-import { RULES_FORM } from '@/utils/validator';
-import { Partner_DTO } from '@/models/partners.model';
-import { Department_DTO, GetDepartment } from '@/models/department.model';
+'use client';
 
+import type React from 'react';
+import { Form, Input, Button, Row, Col, Upload, Select, Card } from 'antd';
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
-
-import { Popconfirm, Tooltip } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { RULES_FORM } from '@/utils/validator';
 import { documentAPI } from '@/libs/api/document.api';
 import { useNotification } from '../UI_shared/Notification';
-
+import { Popconfirm, Tooltip } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
 interface ReusableFormProps {
-  partners: Partner_DTO[];
-  departments: Department_DTO[];
-  formdata: FormInstance<any> | undefined;
+  departments: any[];
+  formdata: any;
   documents: any[];
   setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const ProjectForm: React.FC<ReusableFormProps> = ({
+export const TopicForm: React.FC<ReusableFormProps> = ({
   formdata,
   documents,
   setDocuments,
   departments,
-  partners,
 }) => {
   const { show } = useNotification();
   const updateDocument = (index: number, field: string, value: any) => {
@@ -65,81 +50,64 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
 
   return (
     <Form form={formdata} layout="vertical">
-      <Card title="Thông tin dự án">
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="ProjectName"
-              label="Tên dự án"
-              rules={RULES_FORM.required}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="DepartmentId"
-              label="Đơn vị thực hiện"
-              rules={RULES_FORM.required}
-            >
-              <Select
-                options={departments.map((department) => ({
-                  label: department.DepartmentName,
-                  value: department.DepartmentId,
-                }))}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="TopicName"
+            label="Tên đề tài"
+            rules={RULES_FORM.department_name}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item
+            name="DepartmentId"
+            label="Tên đơn vị"
+            rules={RULES_FORM.required}
+          >
+            <Select
+              options={departments.map((dept: any) => ({
+                label: dept.DepartmentName,
+                value: dept.DepartmentId,
+              }))}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="PartnerId" label="Tên đối tác">
-              <Select
-                options={partners.map((partner: any) => ({
-                  label: partner.PartnerName,
-                  value: partner.Id,
-                }))}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="ProjectStatus"
-              label="Trạng thái dự án"
-              rules={RULES_FORM.required}
-            >
-              <Select>
-                <Select.Option key="1" value="Đang triển khai">
-                  Đang triển khai
-                </Select.Option>
-                <Select.Option key="2" value="Đã hoàn thành">
-                  Đã hoàn thành
-                </Select.Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="ProjectStartDate"
-              label="Ngày bắt đầu"
-              rules={RULES_FORM.required}
-            >
-              <Input type="Date" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="ProjectEndDate" label="Ngày kết thúc">
-              <Input type="Date" />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item name="Description" label="Mô tả" rules={RULES_FORM.required}>
-          <TextArea />
-        </Form.Item>
-      </Card>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="TopicStartDate"
+            label="Ngày bắt đầu"
+            rules={RULES_FORM.required}
+          >
+            <Input type="date" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item name="TopicEndDate" label="Ngày kết thúc">
+            <Input type="date" />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Form.Item
+        name="TopicStatus"
+        label="Trạng thái "
+        rules={RULES_FORM.required}
+      >
+        <Select>
+          <Select.Option value="Đang nghiên cứu">Đang nghiên cứu</Select.Option>
+          <Select.Option value="Đã nghiệm thu">Đã hoàn thành</Select.Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item name="Description" label="Mô tả " rules={RULES_FORM.required}>
+        <TextArea />
+      </Form.Item>
+
       <Card title="Tài liệu đính kèm">
         {documents.map((doc, index) => (
           <Row gutter={16} key={index} align="middle">
@@ -209,5 +177,3 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
     </Form>
   );
 };
-
-export default ProjectForm;

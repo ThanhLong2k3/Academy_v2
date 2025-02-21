@@ -1,7 +1,8 @@
+import moment from 'moment';
 import { ColumnType } from '../UI_shared/ColumType';
 import { Tag } from 'antd';
 
-export const Services_Colum: ColumnType[] = [
+export const trainingCouse_Colum: ColumnType[] = [
   {
     title: 'STT',
     key: 'stt',
@@ -12,22 +13,31 @@ export const Services_Colum: ColumnType[] = [
     ),
   },
   {
-    title: 'Tên dịch vụ',
-    dataIndex: 'ServiceName',
-    key: 'ServiceName',
+    title: 'Tên khóa học',
+    dataIndex: 'CourseName',
+    key: 'CourseName',
+  },
+  {
+    title: 'Tên giảng viên',
+    dataIndex: 'InstructorName',
+    key: 'InstructorName',
+  },
+  {
+    title: 'Tổng thời gian (Tuần)',
+    dataIndex: 'Duration',
+    key: 'Duration',
   },
   {
     title: 'Mô tả',
     dataIndex: 'Description',
     key: 'Description',
   },
-
   {
     title: 'Trạng thái',
     dataIndex: 'ServiceStatus',
     key: 'ServiceStatus',
     render: (status) => (
-      <Tag color={status === 'Đang cung cấp' ? 'green' : 'red'}>{status}</Tag>
+      <Tag color={status === 'Đang diễn ra' ? 'green' : 'red'}>{status}</Tag>
     ),
   },
 ];

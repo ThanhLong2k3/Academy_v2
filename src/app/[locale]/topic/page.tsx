@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Card, message } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { Get_Product, Add_Product } from '@/models/product.model';
-import { productAPI } from '@/libs/api/product.api';
+import type { GetTopic, AddTopic } from '@/models/topic.model';
+import { topicAPI } from '@/libs/api/topic.api';
 import { COLUMNS } from '../../../components/UI_shared/Table';
-import { Product_Colum } from '@/components/product/product_Table';
-import { ProductForm } from '@/components/product/product_Form';
+import { Topic_Colum } from '@/components/topic/topic_Table';
+import { TopicForm } from '@/components/topic/topic_Form';
 import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 import { showDateFormat } from '@/utils/date';
@@ -17,13 +17,11 @@ import type { Department_DTO } from '@/models/department.model';
 import { DepartmentAPI } from '@/libs/api/department.api';
 import { useAddDocuments, useUpdateDocuments } from '../document/page';
 
-const ProductPage = () => {
-  const [products, setProducts] = useState<Get_Product[]>([]);
+const TopicPage = () => {
+  const [Topics, setTopics] = useState<GetTopic[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Get_Product | null>(
-    null,
-  );
+  const [editingTopic, setEditingTopic] = useState<GetTopic | null>(null);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -36,21 +34,21 @@ const ProductPage = () => {
   const [documentAfter, setDocumentAfter] = useState<any[]>([]);
   const { updateDocuments } = useUpdateDocuments();
   const { addDocuments } = useAddDocuments();
-  const fetchProducts = useCallback(async () => {
+  const fetchTopics = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await productAPI.getproductsByPageOrder(
+      const data = await topicAPI.gettopicsByPageOrder(
         currentPage,
         pageSize,
         orderType,
         searchText,
       );
       setTotal(data[0].TotalRecords);
-      setProducts(data);
+      setTopics(data);
     } catch (error) {
       show({
         result: 1,
-        messageError: 'Lỗi tải danh sách sản phẩm',
+        messageError: 'Lỗi tải danh sách đề tài',
       });
     } finally {
       setLoading(false);
@@ -63,15 +61,15 @@ const ProductPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
+    fetchTopics();
     fetchDepartments();
-  }, [fetchProducts, fetchDepartments]);
+  }, [fetchTopics, fetchDepartments]);
 
   const handleRefresh = useCallback(() => {
     setSearchText('');
     setCurrentPage(1);
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchTopics();
+  }, [fetchTopics]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchText(value);
@@ -84,62 +82,63 @@ const ProductPage = () => {
   }, []);
 
   const openCreateModal = useCallback(() => {
-    setEditingProduct(null);
+    setEditingTopic(null);
     form.resetFields();
     setModalVisible(true);
   }, [form]);
 
-  const openEditModal = async (record: Get_Product) => {
-    const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
-      record.Id,
-      'Product',
-    );
-    console.log('1', ...dataDocuments);
+  const openEditModal = useCallback(
+    async (record: GetTopic) => {
+      const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+        record.Id,
+        'Topic',
+      );
+      setDocumentAfter(dataDocuments || []);
+      setDocuments(dataDocuments || []);
 
-    setDocumentAfter(dataDocuments || []);
-    setDocuments(dataDocuments || []);
-
-    setEditingProduct(record);
-    const formattedValues = {
-      ...record,
-      ProductStartDate: showDateFormat(record.ProductStartDate),
-      ProductEndDate: showDateFormat(record.ProductEndDate),
-    };
-    form.setFieldsValue(formattedValues);
-    setModalVisible(true);
-  };
+      setEditingTopic(record);
+      const formattedValues = {
+        ...record,
+        TopicStartDate: showDateFormat(record.TopicStartDate),
+        TopicEndDate: showDateFormat(record.TopicEndDate),
+      };
+      form.setFieldsValue(formattedValues);
+      setModalVisible(true);
+    },
+    [form],
+  );
 
   const closeModal = useCallback(() => {
     setDocuments([]);
     setModalVisible(false);
-    setEditingProduct(null);
+    setEditingTopic(null);
     form.resetFields();
   }, [form]);
 
   const handleDelete = useCallback(
-    async (record: Get_Product) => {
+    async (record: GetTopic) => {
       try {
-        const data: any = await productAPI.deleteproduct(record.Id);
+        const data: any = await topicAPI.deletetopic(record.Id);
         show({
           result: data.result,
-          messageDone: 'Xóa sản phẩm thành công',
-          messageError: 'Xóa sản phẩm thất bại',
+          messageDone: 'Xóa đề tài thành công',
+          messageError: 'Xóa đề tài thất bại',
         });
-        fetchProducts();
+        fetchTopics();
       } catch (error) {
         show({
           result: 1,
-          messageError: 'Lỗi xóa sản phẩm',
+          messageError: 'Lỗi xóa đề tài',
         });
       }
     },
-    [fetchProducts, show],
+    [fetchTopics, show],
   );
 
-  const addProduct = useCallback(async (newProduct: Add_Product) => {
+  const addTopic = useCallback(async (newTopic: AddTopic) => {
     if (
-      newProduct.ProductEndDate &&
-      newProduct.ProductEndDate < newProduct.ProductStartDate
+      newTopic.TopicEndDate &&
+      newTopic.TopicEndDate < newTopic.TopicStartDate
     ) {
       show({
         result: 1,
@@ -147,65 +146,58 @@ const ProductPage = () => {
       });
       return null;
     }
-    const result: any = await productAPI.createproduct(newProduct);
+    const result: any = await topicAPI.createtopic(newTopic);
     return result.result;
   }, []);
 
-  const updateProduct = useCallback(
-    async (Id: number, product: Add_Product) => {
-      if (
-        product.ProductEndDate &&
-        product.ProductEndDate < product.ProductStartDate
-      ) {
-        show({
-          result: 1,
-          messageError: 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
-        });
-        return null;
-      }
-      const newProduct = { Id, ...product };
-      const result: any = await productAPI.updateproduct(newProduct);
-      return result.result;
-    },
-    [],
-  );
+  const updateTopic = useCallback(async (Id: number, Topic: AddTopic) => {
+    if (Topic.TopicEndDate && Topic.TopicEndDate < Topic.TopicStartDate) {
+      show({
+        result: 1,
+        messageError: 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
+      });
+      return null;
+    }
+    const newTopic = { Id, ...Topic };
+    const result: any = await topicAPI.updatetopic(newTopic);
+    return result.result;
+  }, []);
 
   const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
       let uploadedDocuments: any = [];
-      let newIDProduct, result: any;
+      let newIDTopic, result: any;
       if (documents.length > 0) {
         const result = await uploadFile(documents);
         uploadedDocuments = result.documents || [];
       }
       debugger;
-      if (editingProduct) {
-        result = await updateProduct(editingProduct.Id, values);
-        console.log('2', documentAfter);
+      if (editingTopic) {
+        result = await updateTopic(editingTopic.Id, values);
         await updateDocuments(uploadedDocuments, documentAfter);
-        await addDocuments('Product', editingProduct.Id, uploadedDocuments);
+        await addDocuments('Topic', editingTopic.Id, uploadedDocuments);
       } else {
-        newIDProduct = await addProduct(values);
-        await addDocuments('Product', newIDProduct, uploadedDocuments);
+        newIDTopic = await addTopic(values);
+        await addDocuments('Topic', newIDTopic, uploadedDocuments);
       }
 
       show({
-        result: newIDProduct ? newIDProduct : result.result,
-        messageDone: editingProduct
-          ? 'Cập nhật sản phẩm thành công!'
-          : 'Thêm sản phẩm thành công!',
-        messageError: 'Thao tác sản phẩm thất bại',
+        result: newIDTopic ? newIDTopic : result.result,
+        messageDone: editingTopic
+          ? 'Cập nhật đề tài thành công!'
+          : 'Thêm đề tài thành công!',
+        messageError: 'Thao tác đề tài thất bại',
       });
 
-      await fetchProducts();
+      await fetchTopics();
       closeModal();
     } catch (error) {
       console.error('Save error:', error);
       show({
         result: 1,
-        messageError: 'Thao tác sản phẩm thất bại',
+        messageError: 'Thao tác đề tài thất bại',
       });
     } finally {
       setLoading(false);
@@ -213,18 +205,18 @@ const ProductPage = () => {
   }, [
     form,
     documents,
-    editingProduct,
+    editingTopic,
     documentAfter,
-    updateProduct,
+    updateTopic,
     addDocuments,
-    addProduct,
+    addTopic,
     show,
-    fetchProducts,
+    fetchTopics,
     closeModal,
   ]);
 
   const columns = COLUMNS({
-    columnType: Product_Colum,
+    columnType: Topic_Colum,
     openModal: openEditModal,
     handleDelete: handleDelete,
   });
@@ -232,9 +224,9 @@ const ProductPage = () => {
   return (
     <Card className="p-6">
       <Header_Children
-        title={'Quản lý sản phẩm'}
+        title={'Quản lý đề tài'}
         onAdd={openCreateModal}
-        text_btn_add="Thêm sản phẩm"
+        text_btn_add="Thêm đề tài"
       />
 
       <hr />
@@ -242,7 +234,7 @@ const ProductPage = () => {
       <div className="py-4">
         <Space size="middle">
           <Input.Search
-            placeholder="Search Products..."
+            placeholder="Search Topics..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
@@ -263,7 +255,7 @@ const ProductPage = () => {
       <div className="py-4" style={{ marginTop: '20px' }}>
         <Table
           columns={columns}
-          dataSource={products}
+          dataSource={Topics}
           rowKey="Id"
           loading={loading}
           scroll={{ x: 800, y: 400 }}
@@ -280,14 +272,14 @@ const ProductPage = () => {
       </div>
 
       <Modal
-        title={editingProduct ? 'Cập nhập sản phẩm' : 'Thêm sản phẩm'}
+        title={editingTopic ? 'Cập nhập đề tài' : 'Thêm đề tài'}
         open={modalVisible}
         onOk={handleSave}
         onCancel={closeModal}
         width="60%"
         confirmLoading={loading}
       >
-        <ProductForm
+        <TopicForm
           formdata={form}
           documents={documents}
           setDocuments={setDocuments}
@@ -298,4 +290,4 @@ const ProductPage = () => {
   );
 };
 
-export default ProductPage;
+export default TopicPage;

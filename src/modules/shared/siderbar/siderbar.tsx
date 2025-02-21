@@ -28,12 +28,12 @@ const routeMap: { [key: string]: string } = {
   '10': '/vi/division',
   '1': '/vi/personnel',
   '6': '/vi/project',
-  '7': '/Topics',
-  '8': '/Training',
+  '7': '/vi/topic',
+  '8': '/vi/trainingCouse',
   '2': '/vi/partner',
   '3': '/vi/customer',
   '5': '/vi/product',
-  '9': '/Intellectual-Property',
+  '9': '/vi/intellectualProperty',
   '11': '/vi/department',
   '13': '/vi/services',
 };
@@ -184,39 +184,37 @@ const SideBar = () => {
         />
       </div>
 
-      <div className={styles.menuContainer} style={{ marginTop: '15px' }}>
-        <ConfigProvider
-          theme={{
-            token: {
-              colorBgContainer:
-                themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
-              colorText: textColor,
+      <ConfigProvider
+        theme={{
+          token: {
+            colorBgContainer:
+              themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
+            colorText: textColor,
+          },
+          components: {
+            Menu: {
+              itemHeight: 30,
+              itemColor: textColor,
+              itemHoverColor: textColor,
+              horizontalItemSelectedColor: textColor,
             },
-            components: {
-              Menu: {
-                itemHeight: 30,
-                itemColor: textColor,
-                itemHoverColor: textColor,
-                horizontalItemSelectedColor: textColor,
-              },
-            },
+          },
+        }}
+      >
+        <Menu
+          onClick={onClick}
+          className="h-full border-0"
+          defaultOpenKeys={['sub1', 'sub2', 'sub4']}
+          selectedKeys={[getCurrentKey()]}
+          mode="inline"
+          items={sidebarItems}
+          style={{
+            backgroundColor:
+              themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
+            color: textColor,
           }}
-        >
-          <Menu
-            onClick={onClick}
-            className="h-full border-0"
-            defaultOpenKeys={['sub1', 'sub2', 'sub4']}
-            selectedKeys={[getCurrentKey()]}
-            mode="inline"
-            items={sidebarItems}
-            style={{
-              backgroundColor:
-                themeColor?.token?.colorPrimary || 'rgb(13,68,138)',
-              color: textColor,
-            }}
-          />
-        </ConfigProvider>
-      </div>
+        />
+      </ConfigProvider>
     </div>
   );
 };
