@@ -1427,3 +1427,77 @@ END$$
 
 DELIMITER ;
 
+-- Thống kê:
+
+DELIMITER //
+
+CREATE PROCEDURE GetDashboardStatistics()
+BEGIN
+    -- 1. Nhân Viên
+    SELECT 
+        COUNT(*) AS TotalEmployees,
+        SUM(CASE WHEN WorkStatus = 'Đang làm việc' THEN 1 ELSE 0 END) AS ActiveEmployees,
+        SUM(CASE WHEN WorkStatus = 'Đã nghỉ việc' THEN 1 ELSE 0 END) AS FormerEmployees
+    FROM Personnel
+    WHERE IsDeleted = 0;
+
+    -- 2. Đối Tác
+    SELECT 
+        COUNT(*) AS TotalPartners,
+        SUM(CASE WHEN PartnershipStatus = 'Đang hợp tác' THEN 1 ELSE 0 END) AS ActivePartners,
+        SUM(CASE WHEN PartnershipStatus = 'Dừng hợp tác' THEN 1 ELSE 0 END) AS InactivePartners
+    FROM Partner
+    WHERE IsDeleted = 0;
+
+    -- 3. Khách Hàng
+    SELECT 
+        COUNT(*) AS TotalCustomers,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), created_at) > 90 THEN 1 ELSE 0 END) AS RegularCustomers,
+        SUM(CASE WHEN DATEDIFF(CURDATE(), created_at) <= 90 THEN 1 ELSE 0 END) AS NewCustomers
+    FROM Customer
+    WHERE IsDeleted = 0;
+
+    -- 4. Dự Án
+    SELECT 
+        COUNT(*) AS TotalProjects,
+        SUM(CASE WHEN ProjectStatus = 'Đang triển khai' THEN 1 ELSE 0 END) AS OngoingProjects,
+        SUM(CASE WHEN ProjectStatus = 'Đã hoàn thành' THEN 1 ELSE 0 END) AS CompletedProjects
+    FROM Project
+    WHERE IsDeleted = 0;
+
+    -- 5. Đề Tài
+    SELECT 
+        COUNT(*) AS TotalTopics,
+        SUM(CASE WHEN TopicStatus = 'Đang nghiên cứu' THEN 1 ELSE 0 END) AS OngoingTopics,
+        SUM(CASE WHEN TopicStatus = 'Đã nghiệm thu' THEN 1 ELSE 0 END) AS CompletedTopics
+    FROM Topic
+    WHERE IsDeleted = 0;
+
+    -- 6. Khóa Đào Tạo
+    SELECT 
+        COUNT(*) AS TotalCourses,
+        SUM(CASE WHEN ServiceStatus = 'Đang diễn ra' THEN 1 ELSE 0 END) AS OngoingCourses,
+        SUM(CASE WHEN ServiceStatus = 'Đã hoàn thành' THEN 1 ELSE 0 END) AS CompletedCourses
+    FROM TrainingCourse
+    WHERE IsDeleted = 0;
+
+    -- 7. Dịch Vụ
+    SELECT 
+        COUNT(*) AS TotalServices,
+        SUM(CASE WHEN ServiceStatus = 'Đang cung cấp' THEN 1 ELSE 0 END) AS ActiveServices,
+        SUM(CASE WHEN ServiceStatus = 'Đang phát triển' THEN 1 ELSE 0 END) AS DevelopingServices
+    FROM Service
+    WHERE IsDeleted = 0;
+
+    -- 8. Sở Hữu Trí Tuệ
+    SELECT 
+        COUNT(*) AS TotalIntellectualProperties,
+        SUM(CASE WHEN IntellectualPropertyStatus = 'Đã được cấp' THEN 1 ELSE 0 END) AS GrantedProperties,
+        SUM(CASE WHEN IntellectualPropertyStatus = 'Đang xét duyệt' THEN 1 ELSE 0 END) AS PendingProperties
+    FROM IntellectualProperty
+    WHERE IsDeleted = 0;
+END //
+
+DELIMITER ;
+
+CALL GetDashboardStatistics();
