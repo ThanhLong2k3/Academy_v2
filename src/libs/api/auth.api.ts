@@ -1,37 +1,66 @@
-import { apiClient } from '@/libs/api';
+import { CallApi } from '@/libs/call_API';
 import storage from '@/utils/storage';
-import { ACCESS_TOKEN, ROLE } from '@/constants/config';
 
-interface LoginResponse {
-  accessToken: string;
-  role: string;
+interface User {
+  id: number;
+  email: string;
+  role: 'admin' | 'user';
 }
 
-export const login = async (
-  email: string,
-  password: string,
-): Promise<LoginResponse> => {
-  try {
-    const response = await apiClient.post<LoginResponse>('/auth/login', {
-      email,
-      password,
-    });
+interface LoginResponse {
+  token: string;
+  user: User;
+}
 
-    const { accessToken, role } = response.data;
+export const authAPI = {
+  register: async (
+    email: string,
+    password: string,
+    fullName: string,
+  ): Promise<number> => {
+    try {
+      const data = await CallApi.create<number>('auth/register', {
+        email,
+        password,
+        fullName,
+      });
+      return data; // Trả về userId
+    } catch (error) {
+      throw new Error(
+        `Đăng ký thất bại: ${error instanceof Error ? error.message : 'Không xác định'}`,
+      );
+    }
+  },
 
-    // Lưu token vào localStorage
-    storage.setStorage(ACCESS_TOKEN, accessToken);
-    storage.setStorage(ROLE, role);
+  login: async (email: string, password: string): Promise<LoginResponse> => {
+    try {
+      const data = await CallApi.create<LoginResponse>('auth/login', {
+        email,
+        password,
+      });
+      storage.setStorage('ACCESS_TOKEN', data.token);
+      storage.setStorage('ROLE', data.user.role);
+      return data;
+    } catch (error) {
+      throw new Error(
+        `Đăng nhập thất bại: ${error instanceof Error ? error.message : 'Không xác định'}`,
+      );
+    }
+  },
 
-    return response.data;
-  } catch (error) {
-    console.error('Login failed:', error);
-    throw error;
-  }
-};
+  getCurrentUser: async (): Promise<User> => {
+    try {
+      const data = await CallApi.getAll<User>('auth/me');
+      return data[0];
+    } catch (error) {
+      throw new Error(
+        `Lấy thông tin user thất bại: ${error instanceof Error ? error.message : 'Không xác định'}`,
+      );
+    }
+  },
 
-export const logout = () => {
-  storage.clearStorage(ACCESS_TOKEN);
-  storage.clearStorage(ROLE);
-  window.location.href = '/vi/login';
+  logout: () => {
+    storage.clearStorage('ACCESS_TOKEN');
+    storage.clearStorage('ROLE');
+  },
 };

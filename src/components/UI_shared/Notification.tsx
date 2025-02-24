@@ -6,6 +6,7 @@ interface NotificationProps {
   result: any;
   messageDone?: string;
   messageError?: string;
+  messageErrorOfRighs?: string;
 }
 
 export const useNotification = () => {
@@ -25,6 +26,7 @@ export const useNotification = () => {
     result,
     messageDone = 'Thao tác thành công',
     messageError = 'Thao tác thất bại',
+    messageErrorOfRighs = 'Bạn không có quyền thực hiện tác vụ',
   }: NotificationProps) => {
     debugger;
     if (result === 0 || result != 1) {
@@ -38,6 +40,12 @@ export const useNotification = () => {
       notification.error({
         ...notificationConfig,
         description: messageError,
+      });
+    }
+    if (result === 3) {
+      notification.error({
+        ...notificationConfig,
+        description: messageErrorOfRighs,
       });
     }
   };

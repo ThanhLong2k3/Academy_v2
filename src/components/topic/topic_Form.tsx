@@ -100,7 +100,7 @@ export const TopicForm: React.FC<ReusableFormProps> = ({
       >
         <Select>
           <Select.Option value="Đang nghiên cứu">Đang nghiên cứu</Select.Option>
-          <Select.Option value="Đã nghiệm thu">Đã hoàn thành</Select.Option>
+          <Select.Option value="Đã nghiệm thu">Đã nghiệm thu</Select.Option>
         </Select>
       </Form.Item>
 

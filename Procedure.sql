@@ -1426,78 +1426,144 @@ BEGIN
 END$$
 
 DELIMITER ;
-
--- Thống kê:
+-- Thống kê
 
 DELIMITER //
 
-CREATE PROCEDURE GetDashboardStatistics()
+CREATE PROCEDURE GetStatistics()
 BEGIN
-    -- 1. Nhân Viên
     SELECT 
-        COUNT(*) AS TotalEmployees,
-        SUM(CASE WHEN WorkStatus = 'Đang làm việc' THEN 1 ELSE 0 END) AS ActiveEmployees,
-        SUM(CASE WHEN WorkStatus = 'Đã nghỉ việc' THEN 1 ELSE 0 END) AS FormerEmployees
-    FROM Personnel
-    WHERE IsDeleted = 0;
+        -- Personnel Statistics
+        (SELECT COUNT(*) FROM Personnel WHERE IsDeleted = 0) AS total_personnel,
+        (SELECT COUNT(*) FROM Personnel WHERE WorkStatus = 'Đang làm việc' AND EndDate IS NULL AND IsDeleted = 0) AS active_personnel,
+        (SELECT COUNT(*) FROM Personnel WHERE (WorkStatus != 'Đang làm việc' OR EndDate IS NOT NULL) AND IsDeleted = 0) AS inactive_personnel,
+        
+        -- Partner Statistics
+        (SELECT COUNT(*) FROM Partner WHERE IsDeleted = 0) AS total_partners,
+        (SELECT COUNT(*) FROM Partner WHERE PartnershipStatus = 'Đang hợp tác' AND (EndDate IS NULL OR EndDate > CURDATE()) AND IsDeleted = 0) AS active_partners,
+        (SELECT COUNT(*) FROM Partner WHERE (PartnershipStatus != 'Đang hợp tác' OR (EndDate IS NOT NULL AND EndDate <= CURDATE())) AND IsDeleted = 0) AS inactive_partners,
+        
+        -- Customer Statistics
+        (SELECT COUNT(*) FROM Customer WHERE IsDeleted = 0) AS total_customers,
+        
+        -- Project Statistics
+        (SELECT COUNT(*) FROM Project WHERE IsDeleted = 0) AS total_projects,
+        (SELECT COUNT(*) FROM Project WHERE ProjectStatus = 'Đang triển khai' AND (ProjectEndDate IS NULL OR ProjectEndDate > CURDATE()) AND IsDeleted = 0) AS active_projects,
+        (SELECT COUNT(*) FROM Project WHERE ProjectStatus = 'Đã hoàn thành' AND IsDeleted = 0) AS completed_projects,
 
-    -- 2. Đối Tác
-    SELECT 
-        COUNT(*) AS TotalPartners,
-        SUM(CASE WHEN PartnershipStatus = 'Đang hợp tác' THEN 1 ELSE 0 END) AS ActivePartners,
-        SUM(CASE WHEN PartnershipStatus = 'Dừng hợp tác' THEN 1 ELSE 0 END) AS InactivePartners
-    FROM Partner
-    WHERE IsDeleted = 0;
+        -- Product Statistics
+        (SELECT COUNT(*) FROM Product WHERE IsDeleted = 0) AS total_products,
+        (SELECT COUNT(*) FROM Product WHERE ProductStatus = 'Đang thực hiện' AND IsDeleted = 0) AS available_products,
+        (SELECT COUNT(*) FROM Product WHERE ProductStatus = 'Đã hoàn thành' AND IsDeleted = 0) AS completed_products	,
 
-    -- 3. Khách Hàng
-    SELECT 
-        COUNT(*) AS TotalCustomers,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), created_at) > 90 THEN 1 ELSE 0 END) AS RegularCustomers,
-        SUM(CASE WHEN DATEDIFF(CURDATE(), created_at) <= 90 THEN 1 ELSE 0 END) AS NewCustomers
-    FROM Customer
-    WHERE IsDeleted = 0;
+        -- Topic Statistics
+        (SELECT COUNT(*) FROM Topic WHERE IsDeleted = 0) AS total_topics,
+        (SELECT COUNT(*) FROM Topic WHERE TopicStatus = 'Đang nghiên cứu' AND (TopicEndDate IS NULL OR TopicEndDate > CURDATE()) AND IsDeleted = 0) AS active_topics,
+        (SELECT COUNT(*) FROM Topic WHERE TopicStatus = 'Đã nghiệm thu' AND IsDeleted = 0) AS completed_topics,
 
-    -- 4. Dự Án
-    SELECT 
-        COUNT(*) AS TotalProjects,
-        SUM(CASE WHEN ProjectStatus = 'Đang triển khai' THEN 1 ELSE 0 END) AS OngoingProjects,
-        SUM(CASE WHEN ProjectStatus = 'Đã hoàn thành' THEN 1 ELSE 0 END) AS CompletedProjects
-    FROM Project
-    WHERE IsDeleted = 0;
+        -- Training Course Statistics
+        (SELECT COUNT(*) FROM TrainingCourse WHERE IsDeleted = 0) AS total_courses,
+        (SELECT COUNT(*) FROM TrainingCourse WHERE ServiceStatus = 'Đang diễn ra' AND IsDeleted = 0) AS active_courses,
+        (SELECT COUNT(*) FROM TrainingCourse WHERE ServiceStatus = 'Đã hoàn thành' AND IsDeleted = 0) AS completed_courses,
 
-    -- 5. Đề Tài
-    SELECT 
-        COUNT(*) AS TotalTopics,
-        SUM(CASE WHEN TopicStatus = 'Đang nghiên cứu' THEN 1 ELSE 0 END) AS OngoingTopics,
-        SUM(CASE WHEN TopicStatus = 'Đã nghiệm thu' THEN 1 ELSE 0 END) AS CompletedTopics
-    FROM Topic
-    WHERE IsDeleted = 0;
-
-    -- 6. Khóa Đào Tạo
-    SELECT 
-        COUNT(*) AS TotalCourses,
-        SUM(CASE WHEN ServiceStatus = 'Đang diễn ra' THEN 1 ELSE 0 END) AS OngoingCourses,
-        SUM(CASE WHEN ServiceStatus = 'Đã hoàn thành' THEN 1 ELSE 0 END) AS CompletedCourses
-    FROM TrainingCourse
-    WHERE IsDeleted = 0;
-
-    -- 7. Dịch Vụ
-    SELECT 
-        COUNT(*) AS TotalServices,
-        SUM(CASE WHEN ServiceStatus = 'Đang cung cấp' THEN 1 ELSE 0 END) AS ActiveServices,
-        SUM(CASE WHEN ServiceStatus = 'Đang phát triển' THEN 1 ELSE 0 END) AS DevelopingServices
-    FROM Service
-    WHERE IsDeleted = 0;
-
-    -- 8. Sở Hữu Trí Tuệ
-    SELECT 
-        COUNT(*) AS TotalIntellectualProperties,
-        SUM(CASE WHEN IntellectualPropertyStatus = 'Đã được cấp' THEN 1 ELSE 0 END) AS GrantedProperties,
-        SUM(CASE WHEN IntellectualPropertyStatus = 'Đang xét duyệt' THEN 1 ELSE 0 END) AS PendingProperties
-    FROM IntellectualProperty
-    WHERE IsDeleted = 0;
+        -- Intellectual Property Statistics
+        (SELECT COUNT(*) FROM IntellectualProperty WHERE IsDeleted = 0) AS total_ip,
+        (SELECT COUNT(*) FROM IntellectualProperty WHERE IntellectualPropertyStatus = 'Đã được cấp' AND IsDeleted = 0) AS granted_ip,
+        (SELECT COUNT(*) FROM IntellectualProperty WHERE IntellectualPropertyStatus = 'Đang xét duyệt' AND IsDeleted = 0) AS pending_ip;
 END //
 
 DELIMITER ;
+-- user
 
-CALL GetDashboardStatistics();
+DELIMITER $$
+
+-- Thêm User
+CREATE PROCEDURE AddUser(
+    IN p_Email VARCHAR(255),
+    IN p_Password VARCHAR(255),
+    IN p_FullName VARCHAR(255),
+    IN p_Role ENUM('admin', 'user')
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    INSERT INTO users (email, password, fullName, role) 
+    VALUES (p_Email, p_Password, p_FullName, p_Role);
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Cập nhật User
+CREATE PROCEDURE UpdateUser(
+    IN p_Id INT,
+    IN p_Email VARCHAR(255),
+    IN p_Password VARCHAR(255),
+    IN p_FullName VARCHAR(255),
+    IN p_Role ENUM('admin', 'user')
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    UPDATE users
+    SET email = p_Email, password = p_Password, fullName = p_FullName, role = p_Role
+    WHERE id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Xóa mềm User
+CREATE PROCEDURE DeleteUser(
+    IN p_Id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        SELECT 1 AS RESULT;
+    END;
+    
+    DELETE FROM users WHERE id = p_Id;
+    
+    SELECT 0 AS RESULT;
+END$$
+
+-- Lấy danh sách User
+CREATE PROCEDURE GetUsersByPageOrder(
+    IN p_PageIndex INT,
+    IN p_PageSize INT,
+    IN p_OrderType VARCHAR(4),  -- 'ASC' hoặc 'DESC'
+    IN p_FullName VARCHAR(255)  -- Tên người dùng cần tìm (có thể NULL)
+)
+BEGIN
+    DECLARE v_Offset INT;
+    DECLARE v_FullNameFilter VARCHAR(400);
+    SET v_Offset = (p_PageIndex - 1) * p_PageSize;
+
+    -- Xử lý điều kiện tìm kiếm
+    IF p_FullName IS NOT NULL AND p_FullName != '' THEN
+        SET v_FullNameFilter = CONCAT(" AND fullName LIKE '%", p_FullName, "%' ");
+    ELSE
+        SET v_FullNameFilter = "";
+    END IF;
+
+    -- Xây dựng SQL lấy danh sách user kèm tổng số bản ghi
+    SET @sql = CONCAT(
+        'SELECT *, COUNT(*) OVER () AS TotalRecords FROM users WHERE 1=1',
+        v_FullNameFilter,
+        ' ORDER BY fullName ', p_OrderType,
+        ' LIMIT ', p_PageSize, ' OFFSET ', v_Offset
+    );
+
+    -- Thực thi SQL động
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END$$
+
+DELIMITER ;
+CALL GetUsersByPageOrder(1, 10, 'ASC', NULL);

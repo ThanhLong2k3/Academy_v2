@@ -1,6 +1,6 @@
 import { useColorState } from '@/stores/color.store';
 import Image from 'next/image';
-import { Flex, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import {
   themeLightConfig,
   themeBlueConfig,
@@ -15,38 +15,32 @@ import {
 } from '@ant-design/icons';
 import { useState } from 'react';
 import styles from '@/modules/shared/header/Header.module.scss';
+import { usePathname, useRouter } from 'next/navigation'; // Sửa import
 
 const ThemeChanger = () => {
+  const { push } = useRouter(); // Thay vì useRouter()
+  const pathname = usePathname(); // Chỉ dùng để lấy đường dẫn hiện tại
   const { setThemeColor } = useColorState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuClick = (e: { key: string }) => {
     if (e.key === 'logout') {
-      // Xử lý đăng xuất
       console.log('Đăng xuất');
+      push('/vi/login'); // Dùng push() từ next/navigation
     } else if (e.key === 'settings') {
-      // Điều hướng đến trang cài đặt
       console.log('Đi đến trang cài đặt');
     }
     setIsMenuOpen(false);
   };
 
   const menuItems = [
-    {
-      key: 'user',
-      icon: <UserOutlined />,
-      label: 'Tài khoản của bạn',
-    },
+    { key: 'user', icon: <UserOutlined />, label: 'Tài khoản của bạn' },
     {
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt thông tin cá nhân',
     },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Đăng xuất',
-    },
+    { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất' },
   ];
 
   return (
@@ -60,53 +54,21 @@ const ThemeChanger = () => {
     >
       <button
         onClick={() => setThemeColor(themeBlueConfig)}
-        style={{
-          backgroundColor: 'rgb(13,68,138)',
-          borderRadius: '50%',
-          height: '15px',
-          width: '15px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
+        style={buttonStyle('#0d448a')}
       />
-
       <button
         onClick={() => setThemeColor(themeDarkConfig)}
-        style={{
-          backgroundColor: '#52c41a',
-          borderRadius: '50%',
-          height: '15px',
-          width: '15px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
+        style={buttonStyle('#52c41a')}
       />
       <button
         onClick={() => setThemeColor(themeLightConfig)}
-        style={{
-          backgroundColor: '#fffffff',
-          borderRadius: '50%',
-          height: '15px',
-          width: '15px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
+        style={buttonStyle('#ffffff')}
       />
-
       <button
         onClick={() => setThemeColor(themeBrownConfig)}
-        style={{
-          backgroundColor: '#48433d',
-          borderRadius: '50%',
-          height: '15px',
-          width: '15px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
+        style={buttonStyle('#48433d')}
       />
-
       <h1>/</h1>
-
       <Dropdown
         menu={{ items: menuItems, onClick: handleMenuClick }}
         onOpenChange={setIsMenuOpen}
@@ -120,16 +82,28 @@ const ThemeChanger = () => {
             width={40}
             height={40}
             className="h-12 object-contain"
-            style={{
-              marginLeft: '10px',
-              borderRadius: '50%',
-              border: '1px black solid',
-            }}
+            style={imageStyle}
           />
         </div>
       </Dropdown>
     </div>
   );
+};
+
+// Tách style riêng
+const buttonStyle = (color: string) => ({
+  backgroundColor: color,
+  borderRadius: '50%',
+  height: '15px',
+  width: '15px',
+  border: 'none',
+  cursor: 'pointer',
+});
+
+const imageStyle = {
+  marginLeft: '10px',
+  borderRadius: '50%',
+  border: '1px black solid',
 };
 
 export default ThemeChanger;

@@ -36,6 +36,7 @@ const routeMap: { [key: string]: string } = {
   '9': '/vi/intellectualProperty',
   '11': '/vi/department',
   '13': '/vi/services',
+  '20': '/vi/user',
 };
 
 const SideBar = () => {
@@ -86,6 +87,11 @@ const SideBar = () => {
             key: '3',
             label: 'Quản lý khách hàng',
             icon: <WalletOutlined />,
+          },
+          {
+            key: '20',
+            label: 'Quản lý người dùng',
+            icon: <TeamOutlined />,
           },
         ],
       },

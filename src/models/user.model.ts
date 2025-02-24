@@ -1,25 +1,23 @@
-export interface User {
-  id: number;
-  email: string;
-  password: string;
-  fullName: string;
-  role: 'admin' | 'user';
-  created_at: Date;
+export interface GetUser {
+  Id: number;
+  Email: string;
+  Password: string;
+  FullName: string;
+  Role: 'admin' | 'user';
+  Created_at: Date;
   updated_at: Date;
+  TotalRecords: number;
 }
-
-export interface RegisterInput {
-  email: string;
-  password: string;
-  fullName: string;
+export interface AddUser {
+  Email: string;
+  Password: string;
+  FullName: string;
+  Role: 'admin' | 'user';
 }
-
-export interface LoginInput {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  user: Omit<User, 'password'>;
-  accessToken: string;
+export interface UpUser {
+  Id: number;
+  Email: string;
+  Password: string;
+  FullName: string;
+  Role: 'admin' | 'user';
 }
