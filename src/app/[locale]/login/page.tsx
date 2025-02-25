@@ -2,66 +2,154 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  Form,
+  Input,
+  Button,
+  Checkbox,
+  Card,
+  Alert,
+  Divider,
+  Typography,
+} from 'antd';
+import {
+  UserOutlined,
+  LockOutlined,
+  EyeInvisibleOutlined,
+  EyeTwoTone,
+  GoogleOutlined,
+  FacebookOutlined,
+} from '@ant-design/icons';
+import { authAPI } from '@/libs/api/auth.api';
+import { RULES_FORM } from '@/utils/validator';
 
-const LoginPage = () => {
+const { Title, Text } = Typography;
+
+export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onFinish = async (values: any) => {
+    setError('');
+    setLoading(true);
 
-    // TODO: Thêm logic xác thực tài khoản
-    console.log('Đăng nhập với:', { email, password });
-
-    // Điều hướng sau khi đăng nhập thành công
-    router.push('/vi/customer');
+    try {
+      await authAPI.login(values.email, values.password);
+      router.push('/vi/dashboard');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Đăng nhập thất bại. Vui lòng thử lại.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div
       style={{
-        maxWidth: 400,
-        margin: 'auto',
-        padding: '20px',
-        textAlign: 'center',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f0f2f5',
+        padding: '12px',
       }}
     >
-      <h2>Đăng nhập</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-        />
-        <input
-          type="password"
-          placeholder="Mật khẩu"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-        />
-        <button
-          type="submit"
+      <Card style={{ width: '100%', maxWidth: '400px' }}>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: '16px' }}>
+          Đăng nhập
+        </Title>
+        <Text
+          type="secondary"
           style={{
-            width: '100%',
-            padding: '10px',
-            background: 'blue',
-            color: '#fff',
+            display: 'block',
+            textAlign: 'center',
+            marginBottom: '24px',
           }}
         >
-          Đăng nhập
-        </button>
-        <p>
-          Chưa có tài khoản? <a href="/vi/register">Tạo tài khoản ngay</a>
-        </p>
-      </form>
+          Hoặc{' '}
+          <Link href="/vi/register" style={{ fontWeight: 500 }}>
+            đăng ký tài khoản mới
+          </Link>
+        </Text>
+
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+            style={{ marginBottom: '24px' }}
+          />
+        )}
+
+        <Form
+          name="login"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          layout="vertical"
+        >
+          <Form.Item name="email" rules={RULES_FORM.email}>
+            <Input prefix={<UserOutlined />} placeholder="Địa chỉ email" />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Mật khẩu"
+              iconRender={(visible) =>
+                visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+              }
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Form.Item name="remember" valuePropName="checked" noStyle>
+                <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+              </Form.Item>
+              <Link href="#" style={{ fontSize: '14px' }}>
+                Quên mật khẩu?
+              </Link>
+            </div>
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ width: '100%' }}
+              loading={loading}
+            >
+              Đăng nhập
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <Divider plain>Hoặc đăng nhập với</Divider>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '16px',
+          }}
+        >
+          <Button icon={<GoogleOutlined />} style={{ width: '100%' }}>
+            Google
+          </Button>
+          <Button icon={<FacebookOutlined />} style={{ width: '100%' }}>
+            Facebook
+          </Button>
+        </div>
+      </Card>
     </div>
   );
-};
-
-export default LoginPage;
+}

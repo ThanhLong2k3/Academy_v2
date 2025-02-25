@@ -4,6 +4,6 @@ export type ColumnType = {
   dataIndex?: string;
   key: string;
   align?: AlignType | undefined;
-  render?: (text: any, record: any, index?: number) => JSX.Element;
+  render?: (text: any, record: any, index?: number) => React.JSX.Element;
   width?: string;
 };

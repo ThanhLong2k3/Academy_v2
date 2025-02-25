@@ -13,20 +13,30 @@ import {
   SettingOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '@/modules/shared/header/Header.module.scss';
-import { usePathname, useRouter } from 'next/navigation'; // Sửa import
+import { usePathname, useRouter } from 'next/navigation';
+import { authAPI } from '@/libs/api/auth.api';
 
 const ThemeChanger = () => {
-  const { push } = useRouter(); // Thay vì useRouter()
-  const pathname = usePathname(); // Chỉ dùng để lấy đường dẫn hiện tại
+  const { push } = useRouter();
+  const pathname = usePathname();
   const { setThemeColor } = useColorState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>('');
+  useEffect(() => {
+    getUser();
+  }, []);
+  const getUser = async () => {
+    const name = localStorage.getItem('FullName');
+    setUser(name);
+  };
 
-  const handleMenuClick = (e: { key: string }) => {
+  const handleMenuClick = async (e: { key: string }) => {
     if (e.key === 'logout') {
       console.log('Đăng xuất');
-      push('/vi/login'); // Dùng push() từ next/navigation
+      await authAPI.logout();
+      push('/vi');
     } else if (e.key === 'settings') {
       console.log('Đi đến trang cài đặt');
     }
@@ -34,7 +44,7 @@ const ThemeChanger = () => {
   };
 
   const menuItems = [
-    { key: 'user', icon: <UserOutlined />, label: 'Tài khoản của bạn' },
+    { key: 'user', icon: <UserOutlined />, label: user },
     {
       key: 'settings',
       icon: <SettingOutlined />,
@@ -90,7 +100,6 @@ const ThemeChanger = () => {
   );
 };
 
-// Tách style riêng
 const buttonStyle = (color: string) => ({
   backgroundColor: color,
   borderRadius: '50%',

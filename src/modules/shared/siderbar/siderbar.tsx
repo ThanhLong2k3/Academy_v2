@@ -23,7 +23,7 @@ import styles from './siderbar.module.scss';
 type MenuItem = Required<MenuProps>['items'][number];
 
 const routeMap: { [key: string]: string } = {
-  sub5: '/vi',
+  sub5: '/vi/dashboard',
   '12': '/vi/position',
   '10': '/vi/division',
   '1': '/vi/personnel',
@@ -65,7 +65,7 @@ const SideBar = () => {
     () => [
       {
         key: 'sub5',
-        label: 'Doash Board',
+        label: 'DashBoard',
         icon: <ProjectOutlined />,
       },
       {

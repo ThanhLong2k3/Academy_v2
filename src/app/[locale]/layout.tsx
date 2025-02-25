@@ -1,4 +1,5 @@
 'use client';
+import '@ant-design/v5-patch-for-react-19';
 import '@/assets/scss/_global.scss';
 import AppProvider from './AppProvider';
 import { Layout, ConfigProvider } from 'antd';
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/vi';
   const isRegisterPage = pathname === '/vi/register';
+
   return (
     <html lang="en">
       <body>
@@ -23,7 +25,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <AntApp>
             <AppProvider>
               <Layout className="min-h-screen">
-                {!isLoginPage && (
+                {!(isLoginPage || isRegisterPage) && (
                   <Sider
                     width="18%"
                     className="fixed left-0 top-0 h-screen overflow-y-auto"

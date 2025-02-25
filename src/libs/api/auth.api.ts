@@ -1,6 +1,6 @@
 import { CallApi } from '@/libs/call_API';
 import storage from '@/utils/storage';
-
+import { API_URL } from '@/libs/call_API';
 interface User {
   id: number;
   email: string;
@@ -34,12 +34,36 @@ export const authAPI = {
 
   login: async (email: string, password: string): Promise<LoginResponse> => {
     try {
-      const data = await CallApi.create<LoginResponse>('auth/login', {
-        email,
-        password,
+      if (!email || !password) {
+        throw new Error('Email và mật khẩu không được để trống');
+      }
+
+      // Tạo request đăng nhập
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      storage.setStorage('ACCESS_TOKEN', data.token);
-      storage.setStorage('ROLE', data.user.role);
+
+      // Kiểm tra trạng thái response
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Lỗi đăng nhập: ${response.status}`,
+        );
+      }
+
+      // Xử lý dữ liệu trả về
+      const data = await response.json();
+
+      // Lưu token và thông tin người dùng vào localStorage
+      localStorage.setItem('ACCESS_TOKEN', data.token);
+      localStorage.setItem('ROLE', data.user.role);
+      localStorage.setItem('FullName', data.user.fullName);
+
+      console.log('Đăng nhập thành công:', data.user.email);
       return data;
     } catch (error) {
       throw new Error(
@@ -60,7 +84,6 @@ export const authAPI = {
   },
 
   logout: () => {
-    storage.clearStorage('ACCESS_TOKEN');
-    storage.clearStorage('ROLE');
+    localStorage.clear();
   },
 };

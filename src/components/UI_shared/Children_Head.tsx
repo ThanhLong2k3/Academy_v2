@@ -1,20 +1,8 @@
+import Link from 'next/link';
 import ThemeChanger from '@/modules/shared/changetheme';
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Space,
-  Card,
-  Divider,
-  message,
-} from 'antd';
-import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+
 interface HeaderProps {
   title: string;
   onAdd: () => void;
@@ -28,23 +16,12 @@ const Header_Children: React.FC<HeaderProps> = ({
 }) => {
   return (
     <>
-      <div
-        className="flex justify-between items-center mb-6"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontWeight: 'bolder',
-        }}
-      >
-        <div style={{ display: 'flex' }}>
-          <a
-            href="/vi"
-            className="hover:text-purple-600 flex items-center justify-center"
-          >
+      <div className="flex justify-between items-center mb-6 font-bold">
+        <div className="flex items-center">
+          <Link href="/vi/dashboard/">
             <button
               type="button"
-              className="ant-btn css-c2eqey ant-btn-default"
+              className="ant-btn css-c2eqey ant-btn-default flex items-center"
             >
               <span
                 role="img"
@@ -64,34 +41,19 @@ const Header_Children: React.FC<HeaderProps> = ({
                 </svg>
               </span>
             </button>
-          </a>
-
-          <div>/ {title}</div>
+          </Link>
+          <span className="ml-2">/ {title}</span>
         </div>
         <ThemeChanger />
       </div>
 
-      <div
-        className="flex justify-between items-center mb-6"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h1
-          className="text-2xl font-bold"
-          style={{ fontSize: '20px', fontWeight: 'bold' }}
-        >
-          {title}
-        </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{title}</h1>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           className="bg-purple-600"
-          onClick={() => {
-            onAdd();
-          }}
+          onClick={onAdd}
         >
           {text_btn_add}
         </Button>

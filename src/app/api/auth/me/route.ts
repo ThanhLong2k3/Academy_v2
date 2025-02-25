@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import Cookies from 'js-cookie';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pham-thanh-long-2003004';
 

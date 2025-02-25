@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { apiClient } from './api';
 
-const API_URL = '/api';
+export const API_URL = '/api';
 
 export const CallApi = {
   getAll: async <T>(nameApi: string): Promise<T[]> => {

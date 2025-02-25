@@ -14,12 +14,11 @@ export const config = {
   matcher: ['/', '/(vi|en)/:path*'],
 };
 
-// export function middleware(request: NextRequest) {
-//   if (request.nextUrl.pathname.startsWith('/vi')) {
-//     return NextResponse.rewrite(new URL('/vi/login', request.url))
-//   }
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-//   if (request.nextUrl.pathname.startsWith('/vi/customer')) {
-//     return NextResponse.rewrite(new URL('/vi/customer', request.url))
-//   }
-// }
+  if (pathname === '/vi') {
+    return NextResponse.rewrite(new URL('/vi/login', request.url));
+  }
+  return NextResponse.next();
+}
