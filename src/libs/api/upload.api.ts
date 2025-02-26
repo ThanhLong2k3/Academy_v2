@@ -1,9 +1,12 @@
 import { message } from 'antd';
 
 interface Document {
+  Id?: number; // Thêm Id để phân biệt tài liệu cũ
+  DocumentName: string;
   DocumentFile?: File;
   DocumentLink?: string;
-  [key: string]: any;
+  RelatedId?: number;
+  RelatedType?: string;
 }
 
 interface UploadResult {
@@ -12,16 +15,11 @@ interface UploadResult {
   uploadedPaths?: string[];
   error?: string;
 }
-
 export const uploadFile = async (
   documents: Document[],
 ): Promise<UploadResult> => {
   if (documents.length === 0) {
-    return {
-      success: false,
-      documents: [],
-      error: 'No documents to upload',
-    };
+    return { success: false, documents: [], error: 'No documents to upload' };
   }
 
   const formData = new FormData();
@@ -30,7 +28,7 @@ export const uploadFile = async (
 
   // Count files that need uploading
   documents.forEach((doc) => {
-    if (doc.DocumentFile && !doc.DocumentLink) {
+    if (doc.DocumentFile instanceof File) {
       filesCount++;
     }
   });
@@ -38,14 +36,14 @@ export const uploadFile = async (
   if (filesCount === 0) {
     return {
       success: true,
-      documents,
+      documents: documents.map((doc) => ({ ...doc, DocumentFile: undefined })),
       uploadedPaths: [],
     };
   }
 
   // Append files to FormData
   documents.forEach((doc, index) => {
-    if (doc.DocumentFile && !doc.DocumentLink) {
+    if (doc.DocumentFile instanceof File) {
       formData.append(`file_${index}`, doc.DocumentFile);
       hasFiles = true;
     }
@@ -54,7 +52,7 @@ export const uploadFile = async (
   if (!hasFiles) {
     return {
       success: true,
-      documents,
+      documents: documents.map((doc) => ({ ...doc, DocumentFile: undefined })),
       uploadedPaths: [],
     };
   }
@@ -65,19 +63,23 @@ export const uploadFile = async (
       body: formData,
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+
     const result = await response.json();
 
-    if (result.status === 'success' && result.uploadedPaths) {
-      // Create a copy of documents to modify
+    if (result.status === 'success' && Array.isArray(result.uploadedPaths)) {
       const updatedDocuments = [...documents];
       let uploadedIndex = 0;
 
-      // Update documents with new URLs
       updatedDocuments.forEach((doc, index) => {
-        if (doc.DocumentFile && !doc.DocumentLink) {
+        if (doc.DocumentFile instanceof File) {
           updatedDocuments[index] = {
             ...doc,
             DocumentLink: result.uploadedPaths[uploadedIndex],
+            DocumentFile: undefined,
           };
           uploadedIndex++;
         }
@@ -89,16 +91,14 @@ export const uploadFile = async (
         uploadedPaths: result.uploadedPaths,
       };
     } else {
-      message.error('File upload failed');
-      return {
-        success: false,
-        documents,
-        error: 'Upload failed: Invalid server response',
-      };
+      message.error('File upload failed: Invalid response');
+      return { success: false, documents, error: 'Invalid server response' };
     }
   } catch (error) {
     console.error('Error uploading files:', error);
-    message.error('Error uploading files');
+    message.error(
+      `Error uploading files: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
     return {
       success: false,
       documents,
@@ -106,7 +106,6 @@ export const uploadFile = async (
     };
   }
 };
-
 export async function uploadFilesImage(files: File[]): Promise<string[]> {
   const formData = new FormData();
 

@@ -163,57 +163,79 @@ const TopicPage = () => {
     return result.result;
   }, []);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     try {
-      const values = await form.validateFields();
+      const values: any = await form.validateFields();
       setLoading(true);
+
       let uploadedDocuments: any = [];
       let newIDTopic, result: any;
+
       if (documents.length > 0) {
-        const result = await uploadFile(documents);
-        uploadedDocuments = result.documents || [];
+        const uploadResult = await uploadFile(documents);
+        uploadedDocuments = uploadResult.documents || [];
       }
       debugger;
       if (editingTopic) {
         result = await updateTopic(editingTopic.Id, values);
-        await updateDocuments(uploadedDocuments, documentAfter);
-        await addDocuments('Topic', editingTopic.Id, uploadedDocuments);
+        if (result === 0) {
+          const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+            editingTopic.Id,
+            'Topic',
+          );
+          const updateResult = await updateDocuments(
+            uploadedDocuments,
+            dataDocuments,
+          );
+          const addResult = await addDocuments(
+            'Topic',
+            editingTopic.Id,
+            uploadedDocuments,
+          );
+          if (!updateResult.success) {
+            show({
+              result: 1,
+              messageError: 'Cập nhật một số tài liệu thất bại!',
+            });
+            return;
+          }
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+
+          show({ result: 0, messageDone: 'Cập nhật dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Cập nhật dự án thất bại!' });
+          return;
+        }
       } else {
         newIDTopic = await addTopic(values);
-        await addDocuments('Topic', newIDTopic, uploadedDocuments);
+        if (newIDTopic) {
+          const addResult = await addDocuments(
+            'Topic',
+            newIDTopic,
+            uploadedDocuments,
+          );
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+          show({ result: 0, messageDone: 'Thêm dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Thêm dự án thất bại!' });
+          return;
+        }
       }
 
-      show({
-        result: newIDTopic ? newIDTopic : result.result,
-        messageDone: editingTopic
-          ? 'Cập nhật đề tài thành công!'
-          : 'Thêm đề tài thành công!',
-        messageError: 'Thao tác đề tài thất bại',
-      });
-
-      await fetchTopics();
+      fetchTopics();
       closeModal();
     } catch (error) {
-      console.error('Save error:', error);
-      show({
-        result: 1,
-        messageError: 'Thao tác đề tài thất bại',
-      });
+      show({ result: 1, messageError: 'Lỗi lưu dự án' });
     } finally {
       setLoading(false);
     }
-  }, [
-    form,
-    documents,
-    editingTopic,
-    documentAfter,
-    updateTopic,
-    addDocuments,
-    addTopic,
-    show,
-    fetchTopics,
-    closeModal,
-  ]);
+  };
 
   const columns = COLUMNS({
     columnType: Topic_Colum,

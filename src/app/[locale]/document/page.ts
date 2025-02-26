@@ -1,22 +1,42 @@
 import { documentAPI } from '@/libs/api/document.api';
 import { Up_Document_DTO } from '@/models/document.model';
 import { useCallback } from 'react';
+interface NewDocumentDTO {
+  DocumentName: string;
+  DocumentLink: string;
+}
 
 export const useAddDocuments = () => {
   const addDocuments = useCallback(
-    async (RelatedType: string, RelatedId: number, uploadedDocuments: any) => {
-      const newDocuments = uploadedDocuments.filter((doc: any) => !doc.Id);
-      //RelatedType = Product,Topic,Project
-      if (newDocuments.length > 0) {
-        for (const doc of newDocuments) {
-          await documentAPI.createdocument({
-            DocumentName: doc.DocumentName,
-            DocumentLink: doc.DocumentLink,
-            RelatedId: RelatedId,
-            RelatedType: RelatedType,
-          });
-        }
-      }
+    async (
+      relatedType: string,
+      relatedId: number,
+      uploadedDocuments: NewDocumentDTO[],
+    ) => {
+      const newDocuments = uploadedDocuments.filter((doc) => !('Id' in doc)); // Kiểm tra không có Id
+      if (newDocuments.length === 0) return { success: true, failedDocs: [] };
+
+      const results = await Promise.all(
+        newDocuments.map(async (doc) => {
+          try {
+            await documentAPI.createdocument({
+              DocumentName: doc.DocumentName,
+              DocumentLink: doc.DocumentLink,
+              RelatedId: relatedId,
+              RelatedType: relatedType,
+            });
+            return { success: true, document: doc };
+          } catch (error) {
+            console.error(`Failed to add document ${doc.DocumentName}:`, error);
+            return { success: false, document: doc };
+          }
+        }),
+      );
+
+      const failedDocs = results
+        .filter((r) => !r.success)
+        .map((r) => r.document);
+      return { success: failedDocs.length === 0, failedDocs };
     },
     [],
   );
@@ -26,24 +46,44 @@ export const useAddDocuments = () => {
 
 export const useUpdateDocuments = () => {
   const updateDocuments = useCallback(
-    async (documentupload: any[], documentAfter: any[]) => {
-      // Chỉ lấy những tài liệu có ID hợp lệ và bị thay đổi
-      const updatedDataDocuments = documentupload.filter(
+    async (
+      documentUpload: Up_Document_DTO[],
+      documentAfter: Up_Document_DTO[],
+    ) => {
+      const documentAfterCopy = [...documentAfter];
+      const updatedDataDocuments = documentUpload.filter(
         (doc) =>
-          doc.Id && // Đảm bảo có Id
-          !documentAfter.some(
-            (newDoc) =>
-              newDoc.Id === doc.Id && // So sánh theo Id để tránh cập nhật trùng lặp
-              newDoc.DocumentName === doc.DocumentName &&
-              newDoc.DocumentLink === doc.DocumentLink,
+          doc.Id &&
+          !documentAfterCopy.some(
+            (oldDoc) =>
+              oldDoc.Id === doc.Id &&
+              oldDoc.DocumentName === doc.DocumentName &&
+              oldDoc.DocumentLink === doc.DocumentLink,
           ),
       );
 
-      if (updatedDataDocuments.length > 0) {
-        await Promise.all(
-          updatedDataDocuments.map((doc) => documentAPI.updatedocument(doc)),
-        );
-      }
+      if (updatedDataDocuments.length === 0)
+        return { success: true, failedDocs: [] };
+
+      const results = await Promise.all(
+        updatedDataDocuments.map(async (doc) => {
+          try {
+            await documentAPI.updatedocument(doc);
+            return { success: true, document: doc };
+          } catch (error) {
+            console.error(
+              `Failed to update document ${doc.DocumentName}:`,
+              error,
+            );
+            return { success: false, document: doc };
+          }
+        }),
+      );
+
+      const failedDocs = results
+        .filter((r) => !r.success)
+        .map((r) => r.document);
+      return { success: failedDocs.length === 0, failedDocs };
     },
     [],
   );

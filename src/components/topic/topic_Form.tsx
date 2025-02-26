@@ -1,14 +1,26 @@
 'use client';
 
 import type React from 'react';
-import { Form, Input, Button, Row, Col, Upload, Select, Card } from 'antd';
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  Form,
+  Input,
+  Button,
+  Row,
+  Col,
+  Upload,
+  Select,
+  Card,
+  Typography,
+} from 'antd';
+import { FileOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { RULES_FORM } from '@/utils/validator';
 import { documentAPI } from '@/libs/api/document.api';
 import { useNotification } from '../UI_shared/Notification';
 import { Popconfirm, Tooltip } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
+
+const { Text } = Typography;
 interface ReusableFormProps {
   departments: any[];
   formdata: any;
@@ -110,7 +122,12 @@ export const TopicForm: React.FC<ReusableFormProps> = ({
 
       <Card title="Tài liệu đính kèm">
         {documents.map((doc, index) => (
-          <Row gutter={16} key={index} align="middle">
+          <Row
+            gutter={16}
+            key={index}
+            align="middle"
+            style={{ marginBottom: 16 }}
+          >
             <Col span={11}>
               <Form.Item label="Tên tài liệu" required>
                 <Input
@@ -126,24 +143,34 @@ export const TopicForm: React.FC<ReusableFormProps> = ({
                 <Upload
                   beforeUpload={(file) => {
                     updateDocument(index, 'DocumentFile', file);
-                    return false;
+                    return false; // Ngăn upload tự động
                   }}
                   showUploadList={false}
                 >
                   <Button icon={<UploadOutlined />}>Chọn file</Button>
                 </Upload>
-                {doc.DocumentFile && <p>{doc.DocumentFile.name}</p>}
-                {doc.DocumentLink && (
-                  <p>
+                {/* Hiển thị file mới nhất */}
+                {doc.DocumentFile ? (
+                  <Text>
+                    <FileOutlined style={{ marginRight: 8 }} />
+                    {doc.DocumentFile.name.length > 20
+                      ? `${doc.DocumentFile.name.substring(0, 17)}...`
+                      : doc.DocumentFile.name}
+                  </Text>
+                ) : doc.DocumentLink ? (
+                  <Text>
+                    <FileOutlined style={{ marginRight: 8 }} />
                     <a
                       href={doc.DocumentLink}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {doc.DocumentLink.replace('/uploads/', '')}
+                      {doc.DocumentLink.replace('/uploads/', '').length > 20
+                        ? `${doc.DocumentLink.replace('/uploads/', '').substring(0, 17)}...`
+                        : doc.DocumentLink.replace('/uploads/', '')}
                     </a>
-                  </p>
-                )}
+                  </Text>
+                ) : null}
               </Form.Item>
             </Col>
             <Col span={2}>
@@ -158,7 +185,6 @@ export const TopicForm: React.FC<ReusableFormProps> = ({
                     shape="circle"
                     icon={<DeleteOutlined />}
                     style={{ backgroundColor: 'red', color: 'white' }}
-                    className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
                   />
                 </Tooltip>
               </Popconfirm>

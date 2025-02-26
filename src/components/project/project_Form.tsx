@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Form,
   Input,
@@ -9,23 +9,24 @@ import {
   Select,
   Button,
   Upload,
+  Typography,
 } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { RULES_FORM } from '@/utils/validator';
 import { Partner_DTO } from '@/models/partners.model';
-import { Department_DTO, GetDepartment } from '@/models/department.model';
-
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
-
+import { Department_DTO } from '@/models/department.model';
+import { PlusOutlined, UploadOutlined, FileOutlined } from '@ant-design/icons';
 import { Popconfirm, Tooltip } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { documentAPI } from '@/libs/api/document.api';
 import { useNotification } from '../UI_shared/Notification';
 
+const { Text } = Typography;
+
 interface ReusableFormProps {
   partners: Partner_DTO[];
   departments: Department_DTO[];
-  formdata: FormInstance<any> | undefined;
+  formdata: FormInstance<any>;
   documents: any[];
   setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
@@ -38,6 +39,7 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
   partners,
 }) => {
   const { show } = useNotification();
+
   const updateDocument = (index: number, field: string, value: any) => {
     const newDocs = [...documents];
     newDocs[index][field] = value;
@@ -54,13 +56,15 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
   const removeDocument = async (index: number, Id?: number) => {
     if (Id) {
       const result: any = await documentAPI.deletedocument(Id);
-      show({
-        result: result.result,
-        messageDone: 'Xóa tài liệu thành công !',
-        messageError: 'Xóa tài liệu thất bại! ',
-      });
+      if (result.result === 0) {
+        show({ result: 0, messageDone: 'Xóa tài liệu thành công!' });
+        setDocuments(documents.filter((_, i) => i !== index));
+      } else {
+        show({ result: 1, messageError: 'Xóa tài liệu thất bại!' });
+      }
+    } else {
+      setDocuments(documents.filter((_, i) => i !== index));
     }
-    setDocuments(documents.filter((_, i) => i !== index));
   };
 
   return (
@@ -91,7 +95,6 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
             </Form.Item>
           </Col>
         </Row>
-
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="PartnerId" label="Tên đối tác">
@@ -110,10 +113,10 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
               rules={RULES_FORM.required}
             >
               <Select>
-                <Select.Option key="1" value="Đang triển khai">
+                <Select.Option value="Đang triển khai">
                   Đang triển khai
                 </Select.Option>
-                <Select.Option key="2" value="Đã hoàn thành">
+                <Select.Option value="Đã hoàn thành">
                   Đã hoàn thành
                 </Select.Option>
               </Select>
@@ -127,12 +130,12 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
               label="Ngày bắt đầu"
               rules={RULES_FORM.required}
             >
-              <Input type="Date" />
+              <Input type="date" />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="ProjectEndDate" label="Ngày kết thúc">
-              <Input type="Date" />
+              <Input type="date" />
             </Form.Item>
           </Col>
         </Row>
@@ -142,7 +145,12 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
       </Card>
       <Card title="Tài liệu đính kèm">
         {documents.map((doc, index) => (
-          <Row gutter={16} key={index} align="middle">
+          <Row
+            gutter={16}
+            key={index}
+            align="middle"
+            style={{ marginBottom: 16 }}
+          >
             <Col span={11}>
               <Form.Item label="Tên tài liệu" required>
                 <Input
@@ -158,24 +166,34 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
                 <Upload
                   beforeUpload={(file) => {
                     updateDocument(index, 'DocumentFile', file);
-                    return false;
+                    return false; // Ngăn upload tự động
                   }}
                   showUploadList={false}
                 >
                   <Button icon={<UploadOutlined />}>Chọn file</Button>
                 </Upload>
-                {doc.DocumentFile && <p>{doc.DocumentFile.name}</p>}
-                {doc.DocumentLink && (
-                  <p>
+                {/* Hiển thị file mới nhất */}
+                {doc.DocumentFile ? (
+                  <Text>
+                    <FileOutlined style={{ marginRight: 8 }} />
+                    {doc.DocumentFile.name.length > 30
+                      ? `${doc.DocumentFile.name.substring(0, 25)}...`
+                      : doc.DocumentFile.name}
+                  </Text>
+                ) : doc.DocumentLink ? (
+                  <Text>
+                    <FileOutlined style={{ marginRight: 8 }} />
                     <a
                       href={doc.DocumentLink}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {doc.DocumentLink.replace('/uploads/', '')}
+                      {doc.DocumentLink.replace('/uploads/', '').length > 20
+                        ? `${doc.DocumentLink.replace('/uploads/', '').substring(0, 17)}...`
+                        : doc.DocumentLink.replace('/uploads/', '')}
                     </a>
-                  </p>
-                )}
+                  </Text>
+                ) : null}
               </Form.Item>
             </Col>
             <Col span={2}>
@@ -190,7 +208,6 @@ const ProjectForm: React.FC<ReusableFormProps> = ({
                     shape="circle"
                     icon={<DeleteOutlined />}
                     style={{ backgroundColor: 'red', color: 'white' }}
-                    className="bg-white text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
                   />
                 </Tooltip>
               </Popconfirm>

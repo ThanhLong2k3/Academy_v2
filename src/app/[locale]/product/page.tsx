@@ -33,7 +33,6 @@ const ProductPage = () => {
   const { show } = useNotification();
   const [documents, setDocuments] = useState<any[]>([]);
   const [departments, setDepartments] = useState<Department_DTO[]>([]);
-  const [documentAfter, setDocumentAfter] = useState<any[]>([]);
   const { updateDocuments } = useUpdateDocuments();
   const { addDocuments } = useAddDocuments();
   const fetchProducts = useCallback(async () => {
@@ -94,9 +93,7 @@ const ProductPage = () => {
       record.Id,
       'Product',
     );
-    console.log('1', ...dataDocuments);
 
-    setDocumentAfter(dataDocuments || []);
     setDocuments(dataDocuments || []);
 
     setEditingProduct(record);
@@ -170,58 +167,79 @@ const ProductPage = () => {
     [],
   );
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     try {
-      const values = await form.validateFields();
+      const values: any = await form.validateFields();
       setLoading(true);
+
       let uploadedDocuments: any = [];
-      let newIDProduct, result: any;
+      let newIDProductt, result: any;
+
       if (documents.length > 0) {
-        const result = await uploadFile(documents);
-        uploadedDocuments = result.documents || [];
+        const uploadResult = await uploadFile(documents);
+        uploadedDocuments = uploadResult.documents || [];
       }
       debugger;
       if (editingProduct) {
         result = await updateProduct(editingProduct.Id, values);
-        console.log('2', documentAfter);
-        await updateDocuments(uploadedDocuments, documentAfter);
-        await addDocuments('Product', editingProduct.Id, uploadedDocuments);
+        if (result === 0) {
+          const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+            editingProduct.Id,
+            'Product',
+          );
+          const updateResult = await updateDocuments(
+            uploadedDocuments,
+            dataDocuments,
+          );
+          const addResult = await addDocuments(
+            'Product',
+            editingProduct.Id,
+            uploadedDocuments,
+          );
+          if (!updateResult.success) {
+            show({
+              result: 1,
+              messageError: 'Cập nhật một số tài liệu thất bại!',
+            });
+            return;
+          }
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+
+          show({ result: 0, messageDone: 'Cập nhật dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Cập nhật dự án thất bại!' });
+          return;
+        }
       } else {
-        newIDProduct = await addProduct(values);
-        await addDocuments('Product', newIDProduct, uploadedDocuments);
+        newIDProductt = await addProduct(values);
+        if (newIDProductt) {
+          const addResult = await addDocuments(
+            'Productt',
+            newIDProductt,
+            uploadedDocuments,
+          );
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+          show({ result: 0, messageDone: 'Thêm dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Thêm dự án thất bại!' });
+          return;
+        }
       }
 
-      show({
-        result: newIDProduct ? newIDProduct : result.result,
-        messageDone: editingProduct
-          ? 'Cập nhật sản phẩm thành công!'
-          : 'Thêm sản phẩm thành công!',
-        messageError: 'Thao tác sản phẩm thất bại',
-      });
-
-      await fetchProducts();
+      fetchProducts();
       closeModal();
     } catch (error) {
-      console.error('Save error:', error);
-      show({
-        result: 1,
-        messageError: 'Thao tác sản phẩm thất bại',
-      });
+      show({ result: 1, messageError: 'Lỗi lưu dự án' });
     } finally {
       setLoading(false);
     }
-  }, [
-    form,
-    documents,
-    editingProduct,
-    documentAfter,
-    updateProduct,
-    addDocuments,
-    addProduct,
-    show,
-    fetchProducts,
-    closeModal,
-  ]);
+  };
 
   const columns = COLUMNS({
     columnType: Product_Colum,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Modal, Form, Input, Space, Card } from 'antd';
+import { Table, Button, Modal, Form, Space, Card, Input } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type {
   Get_project,
@@ -16,14 +16,15 @@ import { useNotification } from '../../../components/UI_shared/Notification';
 import Header_Children from '@/components/UI_shared/Children_Head';
 import { showDateFormat } from '@/utils/date';
 import { Partner_DTO } from '@/models/partners.model';
-import { Department_DTO, GetDepartment } from '@/models/department.model';
+import { Department_DTO } from '@/models/department.model';
 import { DepartmentAPI } from '@/libs/api/department.api';
 import { PartnerAPI } from '@/libs/api/partner.api';
 import { uploadFile } from '@/libs/api/upload.api';
 import { documentAPI } from '@/libs/api/document.api';
 import { useAddDocuments, useUpdateDocuments } from '../document/page';
+
 const ProjectPage = () => {
-  const [Projects, setProjects] = useState<Get_project[]>([]);
+  const [projects, setProjects] = useState<Get_project[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProject, setEditingProject] = useState<Up_project | null>(null);
@@ -38,40 +39,35 @@ const ProjectPage = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [partners, setPartners] = useState<Partner_DTO[]>([]);
   const [departments, setDepartments] = useState<Department_DTO[]>([]);
-  const [documentAfter, setDocumentAfter] = useState<any[]>([]);
   const { updateDocuments } = useUpdateDocuments();
   const { addDocuments } = useAddDocuments();
-  useEffect(() => {
-    ProjectsByPageOrder(currentPage, pageSize, orderType, searchText);
-    getDepartment();
-    getPartner();
+
+  const refreshProjects = useCallback(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const data = await projectAPI.getprojectsByPageOrder(
+          currentPage,
+          pageSize,
+          orderType,
+          searchText,
+        );
+        setTotal(data[0].TotalRecords);
+        setProjects(data);
+      } catch (error) {
+        show({ result: 1, messageError: 'Lỗi tải danh sách dự án' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
   }, [currentPage, pageSize, orderType, searchText]);
 
-  const ProjectsByPageOrder = async (
-    pageIndex: number,
-    pageSize: number,
-    orderType: 'ASC' | 'DESC',
-    ProjectName?: string,
-  ) => {
-    try {
-      setLoading(true);
-      const data = await projectAPI.getprojectsByPageOrder(
-        pageIndex,
-        pageSize,
-        orderType,
-        ProjectName,
-      );
-      setTotal(data[0].TotalRecords);
-      setProjects(data);
-    } catch (error) {
-      show({
-        result: 1,
-        messageError: 'Lỗi tải danh sách dự án',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    refreshProjects();
+    getDepartment();
+    getPartner();
+  }, [refreshProjects]);
 
   const getDepartment = async () => {
     const data = await DepartmentAPI.getDepartmentByPageOrder(1, 100, 'ASC');
@@ -82,19 +78,25 @@ const ProjectPage = () => {
     const data = await PartnerAPI.getPartnersByPageOrder(1, 100, 'ASC');
     setPartners(data);
   };
+
   const handleRefresh = () => {
     setSearchText('');
-    ProjectsByPageOrder(1, pageSize, orderType);
+    setCurrentPage(1);
+    refreshProjects();
   };
 
   const handleSearch = (value: string) => {
-    ProjectsByPageOrder(1, pageSize, orderType, value);
+    setSearchText(value);
+    setCurrentPage(1);
+    refreshProjects();
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = async () => {
     setEditingProject(null);
     setIsEditing(false);
     form.resetFields();
+
+    setDocuments([]);
     setModalVisible(true);
   };
 
@@ -104,7 +106,6 @@ const ProjectPage = () => {
         record.Id,
         'Project',
       );
-      setDocumentAfter(dataDocuments || []);
       setDocuments(dataDocuments || []);
       setEditingProject(record);
       setIsEditing(true);
@@ -124,23 +125,20 @@ const ProjectPage = () => {
     setEditingProject(null);
     setIsEditing(false);
     form.resetFields();
+    setDocuments([]);
   };
 
   const handleDelete = async (record: Get_project) => {
     try {
       const data: any = await projectAPI.deleteproject(record.Id);
-
       show({
         result: data.result,
         messageDone: 'Xóa dự án thành công',
         messageError: 'Xóa dự án thất bại',
       });
-      ProjectsByPageOrder(currentPage, pageSize, orderType);
+      refreshProjects();
     } catch (error) {
-      show({
-        result: 1,
-        messageError: 'Lỗi xóa dự án',
-      });
+      show({ result: 1, messageError: 'Lỗi xóa dự án' });
     }
   };
 
@@ -149,16 +147,10 @@ const ProjectPage = () => {
       project.ProjectEndDate &&
       project.ProjectEndDate < project.ProjectStartDate
     ) {
-      show({
-        result: 1,
-        messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
-      });
+      show({ result: 1, messageError: 'Ngày kết thúc phải sau ngày bắt đầu' });
       return null;
     }
-    const newProject = {
-      Id: Id,
-      ...project,
-    };
+    const newProject = { Id, ...project };
     const result: any = await projectAPI.updateproject(newProject);
     return result.result;
   };
@@ -168,10 +160,7 @@ const ProjectPage = () => {
       newProject.ProjectEndDate &&
       newProject.ProjectEndDate < newProject.ProjectStartDate
     ) {
-      show({
-        result: 1,
-        messageError: 'Ngày kết thúc phải sau ngày bắt đầu',
-      });
+      show({ result: 1, messageError: 'Ngày kết thúc phải sau ngày bắt đầu' });
       return null;
     }
     const result: any = await projectAPI.createproject(newProject);
@@ -181,30 +170,73 @@ const ProjectPage = () => {
   const handleSave = async () => {
     try {
       const values: any = await form.validateFields();
-      debugger;
       setLoading(true);
+
       let uploadedDocuments: any = [];
       let newIDProject, result: any;
+
       if (documents.length > 0) {
-        const result = await uploadFile(documents);
-        uploadedDocuments = result.documents || [];
+        const uploadResult = await uploadFile(documents);
+        uploadedDocuments = uploadResult.documents || [];
       }
+      debugger;
       if (editingProject) {
         result = await updateProject(editingProject.Id, values);
+        if (result === 0) {
+          const dataDocuments = await documentAPI.GetDocuments_by_IdRelated(
+            editingProject.Id,
+            'Project',
+          );
+          const updateResult = await updateDocuments(
+            uploadedDocuments,
+            dataDocuments,
+          );
+          const addResult = await addDocuments(
+            'Project',
+            editingProject.Id,
+            uploadedDocuments,
+          );
 
-        await updateDocuments(uploadedDocuments, documentAfter);
-        await addDocuments('Project', editingProject.Id, uploadedDocuments);
+          if (!updateResult.success) {
+            show({
+              result: 1,
+              messageError: 'Cập nhật một số tài liệu thất bại!',
+            });
+            return;
+          }
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+
+          show({ result: 0, messageDone: 'Cập nhật dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Cập nhật dự án thất bại!' });
+          return;
+        }
       } else {
         newIDProject = await addProject(values);
-        await addDocuments('Project', newIDProject, uploadedDocuments);
+        if (newIDProject) {
+          const addResult = await addDocuments(
+            'Project',
+            newIDProject,
+            uploadedDocuments,
+          );
+          if (!addResult.success) {
+            show({ result: 1, messageError: 'Thêm một số tài liệu thất bại!' });
+            return;
+          }
+          show({ result: 0, messageDone: 'Thêm dự án thành công!' });
+        } else {
+          show({ result: 1, messageError: 'Thêm dự án thất bại!' });
+          return;
+        }
       }
-      await ProjectsByPageOrder(currentPage, pageSize, orderType);
+
+      refreshProjects();
       closeModal();
     } catch (error) {
-      show({
-        result: 1,
-        messageError: 'Lỗi lưu dự án',
-      });
+      show({ result: 1, messageError: 'Lỗi lưu dự án' });
     } finally {
       setLoading(false);
     }
@@ -213,7 +245,7 @@ const ProjectPage = () => {
   const columns = COLUMNS({
     columnType: Project_Colum,
     openModal: openEditModal,
-    handleDelete: handleDelete,
+    handleDelete,
   });
 
   return (
@@ -223,9 +255,7 @@ const ProjectPage = () => {
         onAdd={openCreateModal}
         text_btn_add="Thêm dự án"
       />
-
       <hr />
-
       <div className="py-4">
         <Space size="middle">
           <Input.Search
@@ -246,18 +276,17 @@ const ProjectPage = () => {
           </Button>
         </Space>
       </div>
-
       <div className="py-4" style={{ marginTop: '20px' }}>
         <Table
           columns={columns}
-          dataSource={Projects}
+          dataSource={projects}
           rowKey="Id"
           loading={loading}
           scroll={{ x: 800, y: 400 }}
           pagination={{
             current: currentPage,
-            pageSize: pageSize,
-            total: total,
+            pageSize,
+            total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `Total ${total} items`,
@@ -268,9 +297,8 @@ const ProjectPage = () => {
           }}
         />
       </div>
-
       <Modal
-        title={editingProject ? 'Cập nhập dự án' : 'Thêm dự án'}
+        title={editingProject ? 'Cập nhật dự án' : 'Thêm dự án'}
         open={modalVisible}
         onOk={handleSave}
         onCancel={closeModal}

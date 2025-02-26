@@ -19,7 +19,7 @@ export const Department_Colum: ColumnType[] = [
   {
     title: 'Số bộ phận',
     dataIndex: 'TotalDivisions',
-    key: 'TotalDivisions',
+    key: 'DepartmentId',
     width: '20%',
     align: 'center',
   },
